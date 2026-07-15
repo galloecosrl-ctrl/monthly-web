@@ -16,12 +16,17 @@
       s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
       s.onload = function () {
         fetch("/api/supabaseConfig", { cache: "no-store" })
-          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (!r.ok) throw new Error("Il servizio non e' configurato su questo server.");
+            return r.json();
+          })
           .then(function (cfg) {
-            if (!cfg.url || !cfg.key) throw new Error(cfg.error || "Configurazione mancante");
+            if (!cfg.url || !cfg.key) throw new Error(cfg.error || "Configurazione mancante sul server.");
             resolve(window.supabase.createClient(cfg.url, cfg.key));
           })
-          .catch(reject);
+          .catch(function (e) {
+            reject(e instanceof Error ? e : new Error("Configurazione non raggiungibile."));
+          });
       };
       s.onerror = function () { reject(new Error("Impossibile caricare supabase-js dal CDN")); };
       document.head.appendChild(s);
