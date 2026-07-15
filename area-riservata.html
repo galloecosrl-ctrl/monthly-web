@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Area riservata - AffittoMese</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="stile.css">
+  <style>
+    .blocco-accesso { max-width: 430px; margin: 48px auto; }
+    .linguette { display: flex; gap: 0; border-bottom: 1px solid var(--bordo); margin-bottom: 18px; }
+    .linguette button {
+      flex: 1; background: none; border: none; cursor: pointer;
+      padding: 10px; font-size: 0.95rem; font-weight: 600; color: var(--testo-tenue);
+      border-bottom: 2.5px solid transparent;
+    }
+    .linguette button.attiva { color: var(--verde-scuro); border-bottom-color: var(--verde); }
+    .separatore { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--testo-tenue); font-size: 0.85rem; }
+    .separatore::before, .separatore::after { content: ""; flex: 1; border-top: 1px solid var(--bordo); }
+    .cruscotto { margin-top: 28px; display: grid; gap: 24px; }
+    .cruscotto h2 { font-size: 1.2rem; margin-bottom: 12px; }
+    .riga-annuncio, .riga-richiesta {
+      display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
+      padding: 14px 0; border-top: 1px solid var(--bordo); flex-wrap: wrap;
+    }
+    .riga-annuncio:first-of-type, .riga-richiesta:first-of-type { border-top: none; }
+    .riga-annuncio .azioni, .riga-richiesta .azioni { display: flex; gap: 8px; flex-wrap: wrap; }
+    .miniature { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .miniature .mini {
+      width: 86px; height: 64px; border-radius: 6px; position: relative;
+      background: var(--sfondo-tenue) center/cover no-repeat; border: 1px solid var(--bordo);
+    }
+    .miniature .mini button {
+      position: absolute; top: -7px; right: -7px; width: 20px; height: 20px;
+      border-radius: 999px; border: none; background: var(--rosso); color: #fff;
+      font-size: 11px; line-height: 1; cursor: pointer;
+    }
+    .contatti { background: var(--verde-chiarissimo); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
+    dialog {
+      border: none; border-radius: 14px; padding: 26px;
+      max-width: 640px; width: calc(100vw - 40px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    dialog::backdrop { background: rgba(0,0,0,0.45); }
+  </style>
+</head>
+<body>
+
+<header class="testata">
+  <a class="logo" href="index.html">Affitto<span>Mese</span></a>
+  <nav id="navUtente">
+    <a class="bottone secondario piccolo" href="index.html">Torna alla ricerca</a>
+  </nav>
+</header>
+
+<main class="contenitore">
+  <div id="caricamento" class="avviso info" style="margin-top:28px">Caricamento…</div>
+
+  <!-- ═══ ACCESSO ═══ -->
+  <div class="blocco-accesso scheda" id="blocchAccesso" style="display:none">
+    <div class="linguette">
+      <button id="lingAccedi" class="attiva" type="button">Accedi</button>
+      <button id="lingRegistrati" type="button">Registrati</button>
+    </div>
+
+    <form id="formAccesso">
+      <label for="acEmail">Email</label>
+      <input id="acEmail" type="email" autocomplete="email" required>
+      <div id="campoPassword">
+        <label for="acPassword">Password</label>
+        <input id="acPassword" type="password" autocomplete="current-password" minlength="8" required>
+      </div>
+      <button class="bottone" type="submit" style="width:100%;margin-top:16px" id="bottoneAccesso">Accedi</button>
+    </form>
+
+    <div class="separatore">oppure</div>
+    <button class="bottone secondario" style="width:100%" id="bottoneGoogle" type="button">Continua con Google</button>
+    <button class="bottone secondario" style="width:100%;margin-top:10px" id="bottoneMagic" type="button">Ricevi un link di accesso via email</button>
+    <div id="esitoAccesso"></div>
+  </div>
+
+  <!-- ═══ CRUSCOTTO ═══ -->
+  <div class="cruscotto" id="cruscotto" style="display:none">
+
+    <div class="scheda" id="schedaProfilo">
+      <h2>Il tuo profilo</h2>
+      <div class="campi-riga">
+        <div><label for="prNome">Nome e cognome</label><input id="prNome" type="text" autocomplete="name"></div>
+        <div><label for="prTelefono">Telefono</label><input id="prTelefono" type="tel" autocomplete="tel"></div>
+      </div>
+      <p style="font-size:0.83rem;color:var(--testo-tenue);margin-top:8px">
+        Nome e telefono vengono mostrati solo alle persone con cui entri in trattativa
+        (il proprietario a cui invii una richiesta, o l'inquilino a cui la accetti).
+      </p>
+      <button class="bottone piccolo" style="margin-top:8px" id="salvaProfilo" type="button">Salva profilo</button>
+      <span id="esitoProfilo" style="font-size:0.85rem;margin-left:10px"></span>
+    </div>
+
+    <div class="scheda">
+      <h2>Le tue richieste di prenotazione</h2>
+      <div id="listaRichiesteMie"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
+    </div>
+
+    <div class="scheda">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2 style="margin-bottom:0">I tuoi annunci</h2>
+        <button class="bottone ambra piccolo" id="nuovoAnnuncio" type="button">+ Nuovo annuncio</button>
+      </div>
+      <div id="listaAnnunciMiei" style="margin-top:12px"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
+    </div>
+
+    <div class="scheda">
+      <h2>Richieste ricevute sui tuoi annunci</h2>
+      <div id="listaRichiesteRicevute"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
+    </div>
+
+    <div class="scheda" id="schedaAdmin" style="display:none">
+      <h2>Amministrazione piattaforma</h2>
+      <p style="font-size:0.88rem;color:var(--testo-tenue);margin-bottom:10px">
+        Tutti gli annunci della piattaforma. Puoi sospendere un annuncio inappropriato o riattivarlo.
+      </p>
+      <div id="listaAdmin"></div>
+    </div>
+
+    <div style="text-align:center;margin:8px 0 30px">
+      <button class="bottone pericolo piccolo" id="esci" type="button">Esci dall'account</button>
+    </div>
+  </div>
+
+  <!-- ═══ EDITOR ANNUNCIO ═══ -->
+  <dialog id="editorAnnuncio">
+    <h2 style="font-size:1.2rem;margin-bottom:6px" id="editorTitolo">Nuovo annuncio</h2>
+    <form id="formAnnuncio">
+      <label for="anTitolo">Titolo dell'annuncio *</label>
+      <input id="anTitolo" type="text" required maxlength="120" placeholder="Es. Camera luminosa vicino all'universita'">
+      <div class="campi-riga">
+        <div>
+          <label for="anTipologia">Tipologia *</label>
+          <select id="anTipologia" required>
+            <option value="camera">Camera</option>
+            <option value="monolocale">Monolocale</option>
+            <option value="appartamento">Appartamento</option>
+            <option value="casa">Casa intera</option>
+          </select>
+        </div>
+        <div><label for="anCitta">Città *</label><input id="anCitta" type="text" required></div>
+        <div><label for="anZona">Zona / quartiere</label><input id="anZona" type="text"></div>
+      </div>
+      <label for="anIndirizzo">Indirizzo completo (non pubblicato: resta visibile solo a te)</label>
+      <input id="anIndirizzo" type="text">
+      <label for="anDescrizione">Descrizione</label>
+      <textarea id="anDescrizione" placeholder="Racconta l'alloggio, la zona, a chi e' adatto…"></textarea>
+      <div class="campi-riga">
+        <div><label for="anMq">Superficie (m²)</label><input id="anMq" type="number" min="1"></div>
+        <div><label for="anCamere">Camere</label><input id="anCamere" type="number" min="0"></div>
+        <div><label for="anBagni">Bagni</label><input id="anBagni" type="number" min="0"></div>
+        <div><label for="anPostiLetto">Posti letto</label><input id="anPostiLetto" type="number" min="0"></div>
+      </div>
+      <div class="campi-riga">
+        <div>
+          <label for="anArredato">Arredato</label>
+          <select id="anArredato"><option value="true">Si'</option><option value="false">No</option></select>
+        </div>
+        <div><label for="anDisponibileDal">Disponibile dal</label><input id="anDisponibileDal" type="date"></div>
+        <div><label for="anMinimoMesi">Periodo minimo (mesi) *</label><input id="anMinimoMesi" type="number" min="1" value="1" required></div>
+      </div>
+      <div class="campi-riga">
+        <div><label for="anPrezzo">Prezzo al mese (€) *</label><input id="anPrezzo" type="number" min="1" step="0.01" required></div>
+        <div>
+          <label for="anSpeseIncluse">Spese</label>
+          <select id="anSpeseIncluse"><option value="true">Incluse nel prezzo</option><option value="false">Escluse</option></select>
+        </div>
+        <div><label for="anSpeseMese">Spese al mese (€, se escluse)</label><input id="anSpeseMese" type="number" min="0" step="0.01"></div>
+        <div><label for="anCauzione">Cauzione (€)</label><input id="anCauzione" type="number" min="0" step="0.01"></div>
+      </div>
+      <label for="anServizi">Servizi (separati da virgola)</label>
+      <input id="anServizi" type="text" placeholder="wifi, lavatrice, aria condizionata, cucina attrezzata">
+      <div id="zonaFoto" style="display:none">
+        <label for="anFoto">Aggiungi foto (JPG/PNG, puoi selezionarne piu' di una)</label>
+        <input id="anFoto" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+        <div class="miniature" id="miniatureFoto"></div>
+      </div>
+      <div id="esitoEditor"></div>
+      <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+        <button class="bottone secondario" type="button" id="chiudiEditor">Chiudi</button>
+        <button class="bottone" type="submit" id="salvaAnnuncio">Salva</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+
+<footer class="pie">
+  <div>AffittoMese e' un servizio di Gallo &amp; Co. srl</div>
+  <div style="margin-top:6px"><a href="privacy.html">Privacy</a></div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  "use strict";
+  var el = function (id) { return document.getElementById(id); };
+  var db = null;
+  var utente = null;      // user Supabase
+  var profilo = null;     // riga di public.profili
+  var annuncioInModifica = null; // riga annunci aperta nell'editor
+  var dopo = new URLSearchParams(location.search).get("dopo");
+
+  AM.pronto().then(function (client) {
+    db = client;
+    return db.auth.getSession();
+  }).then(function (r) {
+    el("caricamento").style.display = "none";
+    if (r.data.session) { entra(r.data.session.user); } else { mostraAccesso(); }
+    db.auth.onAuthStateChange(function (evento, sessione) {
+      if (evento === "SIGNED_IN" && sessione && !utente) entra(sessione.user);
+      if (evento === "SIGNED_OUT") location.reload();
+    });
+  }).catch(function (e) {
+    el("caricamento").className = "avviso errore";
+    el("caricamento").textContent = "Errore di collegamento: " + (e.message || e);
+  });
+
+  // ─── Accesso ──────────────────────────────────────────────────────────────
+  var modalita = "accedi";
+
+  function mostraAccesso() {
+    el("blocchAccesso").style.display = "block";
+  }
+
+  function esitoAccesso(msg, tipo) {
+    el("esitoAccesso").innerHTML = msg ? '<div class="avviso ' + tipo + '">' + msg + "</div>" : "";
+  }
+
+  el("lingAccedi").addEventListener("click", function () { cambiaModalita("accedi"); });
+  el("lingRegistrati").addEventListener("click", function () { cambiaModalita("registrati"); });
+  function cambiaModalita(m) {
+    modalita = m;
+    el("lingAccedi").classList.toggle("attiva", m === "accedi");
+    el("lingRegistrati").classList.toggle("attiva", m === "registrati");
+    el("bottoneAccesso").textContent = m === "accedi" ? "Accedi" : "Crea l'account";
+    el("acPassword").autocomplete = m === "accedi" ? "current-password" : "new-password";
+    esitoAccesso("");
+  }
+
+  el("formAccesso").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var email = el("acEmail").value.trim();
+    var password = el("acPassword").value;
+    el("bottoneAccesso").disabled = true;
+    var azione = modalita === "accedi"
+      ? db.auth.signInWithPassword({ email: email, password: password })
+      : db.auth.signUp({ email: email, password: password, options: { emailRedirectTo: location.origin + "/area-riservata.html" } });
+    azione.then(function (r) {
+      el("bottoneAccesso").disabled = false;
+      if (r.error) { esitoAccesso(AM.testoSicuro(traduciErrore(r.error.message)), "errore"); return; }
+      if (modalita === "registrati" && !r.data.session) {
+        esitoAccesso("Account creato! Controlla la tua email e clicca il link di conferma per attivarlo.", "ok");
+      }
+    });
+  });
+
+  el("bottoneMagic").addEventListener("click", function () {
+    var email = el("acEmail").value.trim();
+    if (!email) { esitoAccesso("Scrivi prima la tua email qui sopra.", "errore"); return; }
+    db.auth.signInWithOtp({ email: email, options: { emailRedirectTo: location.origin + "/area-riservata.html" } })
+      .then(function (r) {
+        esitoAccesso(r.error ? AM.testoSicuro(traduciErrore(r.error.message))
+          : "Ti abbiamo inviato un link di accesso: controlla la posta.", r.error ? "errore" : "ok");
+      });
+  });
+
+  el("bottoneGoogle").addEventListener("click", function () {
+    db.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + "/area-riservata.html" } });
+  });
+
+  function traduciErrore(m) {
+    if (/invalid login credentials/i.test(m)) return "Email o password errati.";
+    if (/already registered/i.test(m)) return "Esiste gia' un account con questa email: usa Accedi.";
+    if (/at least 8/i.test(m) || /password should be/i.test(m)) return "La password deve avere almeno 8 caratteri.";
+    if (/rate limit/i.test(m)) return "Troppi tentativi: riprova tra qualche minuto.";
+    return m;
+  }
+
+  // ─── Cruscotto ────────────────────────────────────────────────────────────
+  function entra(u) {
+    utente = u;
+    if (dopo && /^annuncio\.html\?id=[\w-]+$/.test(dopo)) { location.href = dopo; return; }
+    el("blocchAccesso").style.display = "none";
+    el("cruscotto").style.display = "grid";
+    caricaProfilo();
+    caricaRichiesteMie();
+    caricaAnnunciMiei();
+    caricaRichiesteRicevute();
+  }
+
+  el("esci").addEventListener("click", function () { db.auth.signOut(); });
+
+  // ─── Profilo ──────────────────────────────────────────────────────────────
+  function caricaProfilo() {
+    db.from("profili").select("*").eq("id", utente.id).single().then(function (r) {
+      if (r.error) return;
+      profilo = r.data;
+      el("prNome").value = profilo.nome || "";
+      el("prTelefono").value = profilo.telefono || "";
+      if (profilo.ruolo === "admin") { el("schedaAdmin").style.display = "block"; caricaAdmin(); }
+    });
+  }
+
+  el("salvaProfilo").addEventListener("click", function () {
+    db.from("profili").update({
+      nome: el("prNome").value.trim() || null,
+      telefono: el("prTelefono").value.trim() || null
+    }).eq("id", utente.id).then(function (r) {
+      el("esitoProfilo").textContent = r.error ? "Errore: " + r.error.message : "Salvato ✓";
+      el("esitoProfilo").style.color = r.error ? "var(--rosso)" : "var(--ok)";
+      setTimeout(function () { el("esitoProfilo").textContent = ""; }, 3500);
+    });
+  });
+
+  // ─── Le mie richieste (da inquilino) ─────────────────────────────────────
+  function caricaRichiesteMie() {
+    db.from("richieste")
+      .select("*, annunci(id, titolo, citta, proprietario)")
+      .eq("inquilino", utente.id)
+      .order("creata_il", { ascending: false })
+      .then(function (r) {
+        var cont = el("listaRichiesteMie");
+        if (r.error) { cont.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(r.error.message) + "</div>"; return; }
+        if (!r.data.length) { cont.innerHTML = '<span style="color:var(--testo-tenue)">Non hai ancora inviato richieste. <a href="index.html">Cerca un alloggio</a>.</span>'; return; }
+
+        var accettateDa = r.data.filter(function (x) { return x.stato === "accettata" && x.annunci; })
+          .map(function (x) { return x.annunci.proprietario; });
+
+        var proprietari = {};
+        var caricaContatti = accettateDa.length
+          ? db.from("profili").select("id, nome, email, telefono").in("id", accettateDa)
+          : Promise.resolve({ data: [] });
+
+        Promise.resolve(caricaContatti).then(function (rp) {
+          (rp.data || []).forEach(function (p) { proprietari[p.id] = p; });
+          cont.innerHTML = r.data.map(function (ri) {
+            var s = AM.STATI_RICHIESTA[ri.stato] || { testo: ri.stato, classe: "grigia" };
+            var titolo = ri.annunci ? ri.annunci.titolo : "(annuncio rimosso)";
+            var html = '<div class="riga-richiesta"><div style="flex:1;min-width:220px">' +
+              '<b>' + AM.testoSicuro(titolo) + "</b>" +
+              '<div style="font-size:0.88rem;color:var(--testo-tenue)">Dal ' + AM.dataIt(ri.dal) + " per " + ri.mesi + (ri.mesi === 1 ? " mese" : " mesi") + "</div>";
+            if (ri.stato === "accettata" && ri.annunci && proprietari[ri.annunci.proprietario]) {
+              var p = proprietari[ri.annunci.proprietario];
+              html += '<div class="contatti">🎉 Richiesta accettata! Contatta il proprietario: <b>' +
+                AM.testoSicuro(p.nome || "") + "</b> · " + AM.testoSicuro(p.email || "") +
+                (p.telefono ? " · " + AM.testoSicuro(p.telefono) : "") + "</div>";
+            }
+            html += '</div><div class="azioni"><span class="etichetta ' + s.classe + '">' + s.testo + "</span>";
+            if (ri.stato === "inviata") {
+              html += '<button class="bottone pericolo piccolo" data-annulla="' + ri.id + '" type="button">Annulla</button>';
+            }
+            html += "</div></div>";
+            return html;
+          }).join("");
+          cont.querySelectorAll("[data-annulla]").forEach(function (b) {
+            b.addEventListener("click", function () {
+              db.from("richieste").update({ stato: "annullata" }).eq("id", b.dataset.annulla)
+                .then(caricaRichiesteMie);
+            });
+          });
+        });
+      });
+  }
+
+  // ─── I miei annunci ───────────────────────────────────────────────────────
+  var STATI_ANNUNCIO = {
+    bozza: { testo: "Bozza", classe: "grigia" },
+    pubblicato: { testo: "Pubblicato", classe: "verde" },
+    sospeso: { testo: "Sospeso", classe: "ambra" }
+  };
+
+  function caricaAnnunciMiei() {
+    db.from("annunci")
+      .select("*, foto_annunci(id, percorso, posizione)")
+      .eq("proprietario", utente.id)
+      .order("creato_il", { ascending: false })
+      .then(function (r) {
+        var cont = el("listaAnnunciMiei");
+        if (r.error) { cont.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(r.error.message) + "</div>"; return; }
+        if (!r.data.length) { cont.innerHTML = '<span style="color:var(--testo-tenue)">Nessun annuncio: crea il primo con il pulsante qui sopra.</span>'; return; }
+        cont.innerHTML = r.data.map(function (a) {
+          var s = STATI_ANNUNCIO[a.stato];
+          return '<div class="riga-annuncio"><div style="flex:1;min-width:220px">' +
+            '<b>' + AM.testoSicuro(a.titolo) + "</b> " +
+            '<span class="etichetta ' + s.classe + '">' + s.testo + "</span>" +
+            '<div style="font-size:0.88rem;color:var(--testo-tenue)">' +
+            (AM.TIPOLOGIE[a.tipologia] || a.tipologia) + " · " + AM.testoSicuro(a.citta) + " · " +
+            AM.euro(a.prezzo_mese) + "/mese · " + (a.foto_annunci || []).length + " foto</div></div>" +
+            '<div class="azioni">' +
+            '<a class="bottone secondario piccolo" href="annuncio.html?id=' + a.id + '">Anteprima</a>' +
+            '<button class="bottone secondario piccolo" data-modifica="' + a.id + '" type="button">Modifica</button>' +
+            (a.stato === "pubblicato"
+              ? '<button class="bottone piccolo" data-stato="sospeso" data-id="' + a.id + '" type="button">Sospendi</button>'
+              : '<button class="bottone ambra piccolo" data-stato="pubblicato" data-id="' + a.id + '" type="button">Pubblica</button>') +
+            '<button class="bottone pericolo piccolo" data-elimina="' + a.id + '" type="button">Elimina</button>' +
+            "</div></div>";
+        }).join("");
+
+        cont.querySelectorAll("[data-modifica]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var a = r.data.find(function (x) { return x.id === b.dataset.modifica; });
+            apriEditor(a);
+          });
+        });
+        cont.querySelectorAll("[data-stato]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            db.from("annunci").update({ stato: b.dataset.stato }).eq("id", b.dataset.id)
+              .then(function (r2) {
+                if (r2.error) alert("Errore: " + r2.error.message);
+                caricaAnnunciMiei();
+              });
+          });
+        });
+        cont.querySelectorAll("[data-elimina]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            if (!confirm("Eliminare definitivamente questo annuncio, le sue foto e le richieste ricevute?")) return;
+            var a = r.data.find(function (x) { return x.id === b.dataset.elimina; });
+            var percorsi = (a.foto_annunci || []).map(function (f) { return f.percorso; });
+            var pulizia = percorsi.length ? db.storage.from("foto-annunci").remove(percorsi) : Promise.resolve();
+            Promise.resolve(pulizia).then(function () {
+              return db.from("annunci").delete().eq("id", a.id);
+            }).then(function (r2) {
+              if (r2 && r2.error) alert("Errore: " + r2.error.message);
+              caricaAnnunciMiei();
+              caricaRichiesteRicevute();
+            });
+          });
+        });
+      });
+  }
+
+  // ─── Editor annuncio ──────────────────────────────────────────────────────
+  el("nuovoAnnuncio").addEventListener("click", function () { apriEditor(null); });
+  el("chiudiEditor").addEventListener("click", function () {
+    el("editorAnnuncio").close();
+    caricaAnnunciMiei();
+  });
+
+  function apriEditor(a) {
+    annuncioInModifica = a;
+    el("editorTitolo").textContent = a ? "Modifica annuncio" : "Nuovo annuncio";
+    el("esitoEditor").innerHTML = "";
+    el("anTitolo").value = a ? a.titolo : "";
+    el("anTipologia").value = a ? a.tipologia : "camera";
+    el("anCitta").value = a ? a.citta : "";
+    el("anZona").value = a && a.zona ? a.zona : "";
+    el("anIndirizzo").value = a && a.indirizzo ? a.indirizzo : "";
+    el("anDescrizione").value = a && a.descrizione ? a.descrizione : "";
+    el("anMq").value = a && a.mq ? a.mq : "";
+    el("anCamere").value = a && a.camere ? a.camere : "";
+    el("anBagni").value = a && a.bagni ? a.bagni : "";
+    el("anPostiLetto").value = a && a.posti_letto ? a.posti_letto : "";
+    el("anArredato").value = a ? String(a.arredato) : "true";
+    el("anDisponibileDal").value = a && a.disponibile_dal ? a.disponibile_dal : "";
+    el("anMinimoMesi").value = a ? a.minimo_mesi : 1;
+    el("anPrezzo").value = a ? a.prezzo_mese : "";
+    el("anSpeseIncluse").value = a ? String(a.spese_incluse) : "true";
+    el("anSpeseMese").value = a && a.spese_mese ? a.spese_mese : "";
+    el("anCauzione").value = a && a.cauzione ? a.cauzione : "";
+    el("anServizi").value = a ? (a.servizi || []).join(", ") : "";
+    el("zonaFoto").style.display = a ? "block" : "none";
+    el("anFoto").value = "";
+    if (a) mostraMiniature(a.foto_annunci || []);
+    el("editorAnnuncio").showModal();
+  }
+
+  function mostraMiniature(foto) {
+    var cont = el("miniatureFoto");
+    cont.innerHTML = "";
+    foto.sort(function (a, b) { return a.posizione - b.posizione; }).forEach(function (f) {
+      var div = document.createElement("div");
+      div.className = "mini";
+      div.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
+      var x = document.createElement("button");
+      x.type = "button"; x.textContent = "✕"; x.title = "Elimina foto";
+      x.addEventListener("click", function () {
+        db.storage.from("foto-annunci").remove([f.percorso]).then(function () {
+          return db.from("foto_annunci").delete().eq("id", f.id);
+        }).then(function () { div.remove(); });
+      });
+      div.appendChild(x);
+      cont.appendChild(div);
+    });
+  }
+
+  function valNum(id, interi) {
+    var v = el(id).value;
+    if (v === "") return null;
+    return interi ? parseInt(v, 10) : parseFloat(v);
+  }
+
+  el("formAnnuncio").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var bottone = el("salvaAnnuncio");
+    bottone.disabled = true;
+    el("esitoEditor").innerHTML = "";
+
+    var dati = {
+      titolo: el("anTitolo").value.trim(),
+      tipologia: el("anTipologia").value,
+      citta: el("anCitta").value.trim(),
+      zona: el("anZona").value.trim() || null,
+      indirizzo: el("anIndirizzo").value.trim() || null,
+      descrizione: el("anDescrizione").value.trim() || null,
+      mq: valNum("anMq", true),
+      camere: valNum("anCamere", true),
+      bagni: valNum("anBagni", true),
+      posti_letto: valNum("anPostiLetto", true),
+      arredato: el("anArredato").value === "true",
+      disponibile_dal: el("anDisponibileDal").value || null,
+      minimo_mesi: valNum("anMinimoMesi", true) || 1,
+      prezzo_mese: valNum("anPrezzo", false),
+      spese_incluse: el("anSpeseIncluse").value === "true",
+      spese_mese: valNum("anSpeseMese", false),
+      cauzione: valNum("anCauzione", false),
+      servizi: el("anServizi").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+    };
+
+    var salvataggio;
+    if (annuncioInModifica) {
+      salvataggio = db.from("annunci").update(dati).eq("id", annuncioInModifica.id)
+        .select("*, foto_annunci(id, percorso, posizione)").single();
+    } else {
+      dati.proprietario = utente.id;
+      salvataggio = db.from("annunci").insert(dati)
+        .select("*, foto_annunci(id, percorso, posizione)").single();
+    }
+
+    salvataggio.then(function (r) {
+      if (r.error) {
+        bottone.disabled = false;
+        el("esitoEditor").innerHTML = '<div class="avviso errore">Salvataggio non riuscito: ' + AM.testoSicuro(r.error.message) + "</div>";
+        return;
+      }
+      annuncioInModifica = r.data;
+      el("editorTitolo").textContent = "Modifica annuncio";
+      el("zonaFoto").style.display = "block";
+
+      var file = el("anFoto").files;
+      if (!file.length) {
+        bottone.disabled = false;
+        el("esitoEditor").innerHTML = '<div class="avviso ok">Annuncio salvato' +
+          (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
+        mostraMiniature(r.data.foto_annunci || []);
+        return;
+      }
+      caricaFoto(r.data, file).then(function (esito) {
+        bottone.disabled = false;
+        el("anFoto").value = "";
+        el("esitoEditor").innerHTML = esito.errori
+          ? '<div class="avviso errore">Annuncio salvato ma ' + esito.errori + " foto non caricate: riprova.</div>"
+          : '<div class="avviso ok">Annuncio e foto salvati' +
+            (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
+        ricaricaFotoEditor();
+      });
+    });
+  });
+
+  function caricaFoto(annuncio, file) {
+    var base = (annuncio.foto_annunci || []).reduce(function (m, f) { return Math.max(m, f.posizione + 1); }, 0);
+    var errori = 0;
+    var catena = Promise.resolve();
+    Array.prototype.forEach.call(file, function (f, i) {
+      catena = catena.then(function () {
+        var estensione = (f.name.split(".").pop() || "jpg").toLowerCase();
+        var percorso = utente.id + "/" + annuncio.id + "/" + Date.now() + "-" + i + "." + estensione;
+        return db.storage.from("foto-annunci").upload(percorso, f, { contentType: f.type })
+          .then(function (r) {
+            if (r.error) { errori++; return; }
+            return db.from("foto_annunci").insert({ annuncio_id: annuncio.id, percorso: percorso, posizione: base + i })
+              .then(function (r2) { if (r2.error) errori++; });
+          });
+      });
+    });
+    return catena.then(function () { return { errori: errori }; });
+  }
+
+  function ricaricaFotoEditor() {
+    if (!annuncioInModifica) return;
+    db.from("foto_annunci").select("id, percorso, posizione")
+      .eq("annuncio_id", annuncioInModifica.id)
+      .then(function (r) { if (!r.error) mostraMiniature(r.data); });
+  }
+
+  // ─── Richieste ricevute (da proprietario) ─────────────────────────────────
+  function caricaRichiesteRicevute() {
+    db.from("richieste")
+      .select("*, annunci!inner(id, titolo, proprietario)")
+      .eq("annunci.proprietario", utente.id)
+      .order("creata_il", { ascending: false })
+      .then(function (r) {
+        var cont = el("listaRichiesteRicevute");
+        if (r.error) { cont.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(r.error.message) + "</div>"; return; }
+        if (!r.data.length) { cont.innerHTML = '<span style="color:var(--testo-tenue)">Nessuna richiesta ricevuta finora.</span>'; return; }
+
+        var inquilini = r.data.map(function (x) { return x.inquilino; });
+        db.from("profili").select("id, nome, email, telefono").in("id", inquilini).then(function (rp) {
+          var persone = {};
+          (rp.data || []).forEach(function (p) { persone[p.id] = p; });
+          cont.innerHTML = r.data.map(function (ri) {
+            var s = AM.STATI_RICHIESTA[ri.stato] || { testo: ri.stato, classe: "grigia" };
+            var p = persone[ri.inquilino] || {};
+            var html = '<div class="riga-richiesta"><div style="flex:1;min-width:220px">' +
+              "<b>" + AM.testoSicuro(ri.annunci.titolo) + "</b>" +
+              '<div style="font-size:0.88rem;color:var(--testo-tenue)">Dal ' + AM.dataIt(ri.dal) + " per " + ri.mesi + (ri.mesi === 1 ? " mese" : " mesi") + "</div>" +
+              '<div class="contatti">Da: <b>' + AM.testoSicuro(p.nome || "(nome non indicato)") + "</b> · " +
+              AM.testoSicuro(p.email || "") + (p.telefono ? " · " + AM.testoSicuro(p.telefono) : "") + "</div>" +
+              (ri.messaggio ? '<div style="font-size:0.9rem;margin-top:6px">&ldquo;' + AM.testoSicuro(ri.messaggio) + "&rdquo;</div>" : "");
+            html += '</div><div class="azioni"><span class="etichetta ' + s.classe + '">' + s.testo + "</span>";
+            if (ri.stato === "inviata") {
+              html += '<button class="bottone piccolo" data-rispondi="accettata" data-id="' + ri.id + '" type="button">Accetta</button>' +
+                '<button class="bottone pericolo piccolo" data-rispondi="rifiutata" data-id="' + ri.id + '" type="button">Rifiuta</button>';
+            }
+            html += "</div></div>";
+            return html;
+          }).join("");
+          cont.querySelectorAll("[data-rispondi]").forEach(function (b) {
+            b.addEventListener("click", function () {
+              db.from("richieste").update({ stato: b.dataset.rispondi }).eq("id", b.dataset.id)
+                .then(function (r2) {
+                  if (r2.error) alert("Errore: " + r2.error.message);
+                  caricaRichiesteRicevute();
+                });
+            });
+          });
+        });
+      });
+  }
+
+  // ─── Amministrazione ──────────────────────────────────────────────────────
+  function caricaAdmin() {
+    db.from("annunci").select("id, titolo, citta, tipologia, stato, prezzo_mese, creato_il")
+      .order("creato_il", { ascending: false }).limit(200)
+      .then(function (r) {
+        var cont = el("listaAdmin");
+        if (r.error) { cont.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(r.error.message) + "</div>"; return; }
+        cont.innerHTML = r.data.map(function (a) {
+          var s = STATI_ANNUNCIO[a.stato];
+          return '<div class="riga-annuncio"><div style="flex:1;min-width:220px">' +
+            "<b>" + AM.testoSicuro(a.titolo) + "</b> " +
+            '<span class="etichetta ' + s.classe + '">' + s.testo + "</span>" +
+            '<div style="font-size:0.88rem;color:var(--testo-tenue)">' +
+            (AM.TIPOLOGIE[a.tipologia] || a.tipologia) + " · " + AM.testoSicuro(a.citta) + " · " + AM.euro(a.prezzo_mese) + "/mese</div></div>" +
+            '<div class="azioni">' +
+            '<a class="bottone secondario piccolo" href="annuncio.html?id=' + a.id + '">Apri</a>' +
+            (a.stato === "pubblicato"
+              ? '<button class="bottone pericolo piccolo" data-admin-stato="sospeso" data-id="' + a.id + '" type="button">Sospendi</button>'
+              : (a.stato === "sospeso"
+                ? '<button class="bottone piccolo" data-admin-stato="pubblicato" data-id="' + a.id + '" type="button">Riattiva</button>'
+                : "")) +
+            "</div></div>";
+        }).join("") || '<span style="color:var(--testo-tenue)">Nessun annuncio sulla piattaforma.</span>';
+        cont.querySelectorAll("[data-admin-stato]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            db.from("annunci").update({ stato: b.dataset.adminStato }).eq("id", b.dataset.id)
+              .then(function (r2) {
+                if (r2.error) alert("Errore: " + r2.error.message);
+                caricaAdmin();
+              });
+          });
+        });
+      });
+  }
+})();
+</script>
+</body>
+</html>

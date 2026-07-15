@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AffittoMese - Affitti mensili per studenti e professionisti</title>
+  <meta name="description" content="Trova camere, monolocali, appartamenti e case in affitto mensile. Per studenti, professionisti e lavoratori in trasferta. Pubblica gratis il tuo annuncio.">
+  <link rel="stylesheet" href="stile.css">
+  <style>
+    /* Hero con ricerca */
+    .eroe {
+      background: linear-gradient(135deg, var(--verde-scuro) 0%, var(--verde) 60%, #14b8a6 100%);
+      color: #fff; padding: 64px 20px 84px; text-align: center;
+    }
+    .eroe h1 { font-size: 2.3rem; letter-spacing: -0.02em; margin-bottom: 10px; }
+    .eroe p { font-size: 1.12rem; opacity: 0.92; max-width: 640px; margin: 0 auto; }
+    .ricerca {
+      max-width: 980px; margin: -46px auto 0; position: relative; z-index: 5;
+      background: #fff; border-radius: 14px; padding: 18px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.14);
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .ricerca > div { flex: 1; min-width: 150px; }
+    .ricerca label { margin-top: 0; }
+    .ricerca .bottone { height: 44px; min-width: 130px; flex: 0 0 auto; }
+    .sezione { padding: 46px 0 8px; }
+    .sezione h2 { font-size: 1.5rem; margin-bottom: 18px; letter-spacing: -0.01em; }
+    .passi { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-top: 8px; }
+    .passo { text-align: left; }
+    .passo .numero {
+      width: 38px; height: 38px; border-radius: 999px; margin-bottom: 10px;
+      background: var(--verde-chiarissimo); color: var(--verde-scuro);
+      display: flex; align-items: center; justify-content: center; font-weight: 800;
+    }
+    .passo h3 { font-size: 1.02rem; margin-bottom: 4px; }
+    .passo p { color: var(--testo-tenue); font-size: 0.92rem; }
+    .fascia-proprietari {
+      margin-top: 54px; background: var(--verde-chiarissimo);
+      border: 1px solid #99f6e4; border-radius: 14px;
+      padding: 32px 28px; text-align: center;
+    }
+    .fascia-proprietari h2 { font-size: 1.4rem; margin-bottom: 8px; }
+    .fascia-proprietari p { color: var(--testo-tenue); max-width: 560px; margin: 0 auto 18px; }
+    @media (max-width: 640px) { .eroe h1 { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+
+<header class="testata">
+  <a class="logo" href="index.html">Affitto<span>Mese</span></a>
+  <nav>
+    <a class="bottone secondario piccolo" href="area-riservata.html">Area riservata</a>
+  </nav>
+</header>
+
+<section class="eroe">
+  <h1>La casa per i tuoi prossimi mesi</h1>
+  <p>Camere, monolocali, appartamenti e case in affitto mensile.
+     Per studenti, professionisti, professori e lavoratori in trasferta.</p>
+</section>
+
+<form class="ricerca contenitore" id="formRicerca">
+  <div>
+    <label for="ricCitta">Dove</label>
+    <input id="ricCitta" type="text" placeholder="Città (es. Frosinone)">
+  </div>
+  <div>
+    <label for="ricTipologia">Tipologia</label>
+    <select id="ricTipologia">
+      <option value="">Tutte</option>
+      <option value="camera">Camera</option>
+      <option value="monolocale">Monolocale</option>
+      <option value="appartamento">Appartamento</option>
+      <option value="casa">Casa intera</option>
+    </select>
+  </div>
+  <div>
+    <label for="ricBudget">Budget massimo al mese</label>
+    <select id="ricBudget">
+      <option value="">Qualsiasi</option>
+      <option value="300">Fino a 300 €</option>
+      <option value="500">Fino a 500 €</option>
+      <option value="800">Fino a 800 €</option>
+      <option value="1200">Fino a 1.200 €</option>
+      <option value="2000">Fino a 2.000 €</option>
+    </select>
+  </div>
+  <button class="bottone ambra" type="submit">Cerca</button>
+</form>
+
+<main class="contenitore">
+  <section class="sezione">
+    <h2 id="titoloRisultati">Ultimi annunci</h2>
+    <div id="esitoRicerca"></div>
+    <div class="griglia-annunci" id="grigliaAnnunci"></div>
+  </section>
+
+  <section class="sezione">
+    <h2>Come funziona</h2>
+    <div class="passi">
+      <div class="passo">
+        <div class="numero">1</div>
+        <h3>Cerca e confronta</h3>
+        <p>Consulta gli annunci senza registrarti: foto, prezzo mensile, servizi e periodo minimo sono sempre indicati.</p>
+      </div>
+      <div class="passo">
+        <div class="numero">2</div>
+        <h3>Invia la richiesta</h3>
+        <p>Crea un account gratuito e invia la richiesta con il periodo che ti serve e un messaggio di presentazione.</p>
+      </div>
+      <div class="passo">
+        <div class="numero">3</div>
+        <h3>Accordati col proprietario</h3>
+        <p>Se il proprietario accetta, vi scambiate i contatti e definite insieme contratto e ingresso.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="fascia-proprietari">
+    <h2>Hai una camera o una casa da affittare a mesi?</h2>
+    <p>Pubblica gratis il tuo annuncio e ricevi richieste da studenti e professionisti
+       gia' interessati ad affitti mensili. Decidi tu a chi rispondere.</p>
+    <a class="bottone" href="area-riservata.html">Pubblica il tuo annuncio</a>
+  </section>
+</main>
+
+<footer class="pie">
+  <div>AffittoMese e' un servizio di Gallo &amp; Co. srl</div>
+  <div style="margin-top:6px">
+    <a href="privacy.html">Privacy</a>
+    <a href="area-riservata.html">Area riservata</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  "use strict";
+  var griglia = document.getElementById("grigliaAnnunci");
+  var esito = document.getElementById("esitoRicerca");
+  var titolo = document.getElementById("titoloRisultati");
+
+  function mostraErrore(msg) {
+    esito.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>";
+  }
+
+  function cerca(filtri) {
+    esito.innerHTML = '<div class="avviso info">Ricerca in corso…</div>';
+    griglia.innerHTML = "";
+    AM.pronto().then(function (db) {
+      var q = db.from("annunci")
+        .select("id, titolo, tipologia, citta, zona, prezzo_mese, spese_incluse, foto_annunci(percorso, posizione)")
+        .eq("stato", "pubblicato")
+        .order("creato_il", { ascending: false })
+        .limit(24);
+      if (filtri.citta) q = q.ilike("citta", "%" + filtri.citta + "%");
+      if (filtri.tipologia) q = q.eq("tipologia", filtri.tipologia);
+      if (filtri.budget) q = q.lte("prezzo_mese", filtri.budget);
+      return q.then(function (r) {
+        if (r.error) throw r.error;
+        esito.innerHTML = "";
+        if (!r.data.length) {
+          esito.innerHTML = '<div class="avviso info">Nessun annuncio trovato' +
+            (filtri.attiva ? " con questi criteri: prova ad allargare la ricerca." : " al momento: torna a trovarci presto!") + "</div>";
+          return;
+        }
+        griglia.innerHTML = r.data.map(function (a) { return AM.cartaAnnuncio(db, a); }).join("");
+      });
+    }).catch(function (e) {
+      mostraErrore("Non riusciamo a caricare gli annunci in questo momento. " + (e.message || ""));
+    });
+  }
+
+  document.getElementById("formRicerca").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    titolo.textContent = "Risultati della ricerca";
+    cerca({
+      citta: document.getElementById("ricCitta").value.trim(),
+      tipologia: document.getElementById("ricTipologia").value,
+      budget: document.getElementById("ricBudget").value,
+      attiva: true
+    });
+    document.getElementById("titoloRisultati").scrollIntoView({ behavior: "smooth" });
+  });
+
+  cerca({});
+})();
+</script>
+</body>
+</html>

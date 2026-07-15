@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annuncio - AffittoMese</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="stile.css">
+  <style>
+    .dettaglio { display: flex; gap: 28px; margin-top: 28px; align-items: flex-start; flex-wrap: wrap; }
+    .colonna-principale { flex: 2; min-width: 300px; }
+    .colonna-laterale { flex: 1; min-width: 280px; position: sticky; top: 84px; }
+    .galleria { display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr); }
+    .galleria .principale {
+      grid-column: 1 / -1; height: 340px; border-radius: 12px;
+      background: var(--sfondo-tenue) center/cover no-repeat;
+      display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--testo-tenue);
+    }
+    .galleria .mini {
+      height: 82px; border-radius: 8px; cursor: pointer;
+      background: var(--sfondo-tenue) center/cover no-repeat;
+      border: 2px solid transparent;
+    }
+    .galleria .mini.attiva { border-color: var(--verde); }
+    .dettaglio h1 { font-size: 1.6rem; margin: 18px 0 4px; letter-spacing: -0.01em; }
+    .luogo { color: var(--testo-tenue); margin-bottom: 14px; }
+    .caratteristiche {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px; margin: 18px 0;
+    }
+    .caratteristiche div {
+      background: var(--sfondo-tenue); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem;
+    }
+    .caratteristiche b { display: block; font-size: 0.98rem; }
+    .servizi { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
+    .descrizione { white-space: pre-line; color: var(--testo); }
+    .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--verde-scuro); }
+    .prezzo-grande small { font-size: 0.95rem; font-weight: 400; color: var(--testo-tenue); }
+    .voce-costo { display: flex; justify-content: space-between; font-size: 0.92rem; margin-top: 6px; color: var(--testo-tenue); }
+  </style>
+</head>
+<body>
+
+<header class="testata">
+  <a class="logo" href="index.html">Affitto<span>Mese</span></a>
+  <nav>
+    <a class="bottone secondario piccolo" href="area-riservata.html">Area riservata</a>
+  </nav>
+</header>
+
+<main class="contenitore">
+  <div id="stato"></div>
+  <div class="dettaglio" id="dettaglio" style="display:none">
+    <div class="colonna-principale">
+      <div class="galleria" id="galleria">
+        <div class="principale" id="fotoPrincipale">🏠</div>
+      </div>
+      <span class="etichetta" id="etTipologia" style="margin-top:16px;display:inline-block"></span>
+      <h1 id="titolo"></h1>
+      <div class="luogo" id="luogo"></div>
+      <div class="caratteristiche" id="caratteristiche"></div>
+      <div class="servizi" id="servizi"></div>
+      <h2 style="font-size:1.1rem;margin:8px 0 6px">Descrizione</h2>
+      <p class="descrizione" id="descrizione"></p>
+    </div>
+
+    <div class="colonna-laterale scheda">
+      <div class="prezzo-grande"><span id="prezzo"></span> <small>/ mese</small></div>
+      <div id="dettagliCosti"></div>
+      <hr style="border:none;border-top:1px solid var(--bordo);margin:16px 0">
+      <div id="zonaRichiesta"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="pie">
+  <div>AffittoMese e' un servizio di Gallo &amp; Co. srl</div>
+  <div style="margin-top:6px"><a href="privacy.html">Privacy</a></div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  "use strict";
+  var idAnnuncio = new URLSearchParams(location.search).get("id");
+  var stato = document.getElementById("stato");
+  var el = function (id) { return document.getElementById(id); };
+
+  function errore(msg) {
+    stato.innerHTML = '<div class="avviso errore" style="margin-top:24px">' + AM.testoSicuro(msg) +
+      ' <a href="index.html">Torna alla ricerca</a></div>';
+  }
+
+  if (!idAnnuncio) { errore("Annuncio non indicato."); return; }
+  stato.innerHTML = '<div class="avviso info" style="margin-top:24px">Caricamento dell\'annuncio…</div>';
+
+  AM.pronto().then(function (db) {
+    return db.from("annunci")
+      .select("*, foto_annunci(percorso, posizione)")
+      .eq("id", idAnnuncio)
+      .maybeSingle()
+      .then(function (r) {
+        if (r.error) throw r.error;
+        if (!r.data) { errore("Annuncio non trovato o non piu' disponibile."); return; }
+        mostra(db, r.data);
+      });
+  }).catch(function (e) {
+    errore("Non riusciamo a caricare l'annuncio. " + (e.message || ""));
+  });
+
+  function mostra(db, a) {
+    stato.innerHTML = "";
+    document.title = a.titolo + " - AffittoMese";
+    el("dettaglio").style.display = "flex";
+    el("etTipologia").textContent = AM.TIPOLOGIE[a.tipologia] || a.tipologia;
+    el("titolo").textContent = a.titolo;
+    el("luogo").textContent = a.citta + (a.zona ? " · " + a.zona : "");
+    el("prezzo").textContent = AM.euro(a.prezzo_mese);
+    el("descrizione").textContent = a.descrizione || "";
+
+    // Galleria
+    var foto = (a.foto_annunci || []).sort(function (x, y) { return x.posizione - y.posizione; });
+    if (foto.length) {
+      var principale = el("fotoPrincipale");
+      principale.textContent = "";
+      principale.style.backgroundImage = "url('" + AM.urlFoto(db, foto[0].percorso) + "')";
+      foto.forEach(function (f, i) {
+        var mini = document.createElement("div");
+        mini.className = "mini" + (i === 0 ? " attiva" : "");
+        mini.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
+        mini.addEventListener("click", function () {
+          principale.style.backgroundImage = mini.style.backgroundImage;
+          document.querySelectorAll(".galleria .mini").forEach(function (m) { m.classList.remove("attiva"); });
+          mini.classList.add("attiva");
+        });
+        el("galleria").appendChild(mini);
+      });
+    }
+
+    // Caratteristiche
+    var car = [];
+    if (a.mq) car.push(["Superficie", a.mq + " m²"]);
+    if (a.camere) car.push(["Camere", a.camere]);
+    if (a.bagni) car.push(["Bagni", a.bagni]);
+    if (a.posti_letto) car.push(["Posti letto", a.posti_letto]);
+    car.push(["Arredato", a.arredato ? "Si'" : "No"]);
+    car.push(["Periodo minimo", a.minimo_mesi + (a.minimo_mesi === 1 ? " mese" : " mesi")]);
+    if (a.disponibile_dal) car.push(["Disponibile dal", AM.dataIt(a.disponibile_dal)]);
+    el("caratteristiche").innerHTML = car.map(function (c) {
+      return "<div>" + c[0] + "<b>" + AM.testoSicuro(String(c[1])) + "</b></div>";
+    }).join("");
+
+    (a.servizi || []).forEach(function (s) {
+      var span = document.createElement("span");
+      span.className = "etichetta grigia";
+      span.textContent = s;
+      el("servizi").appendChild(span);
+    });
+
+    // Costi
+    var costi = "";
+    costi += '<div class="voce-costo"><span>Spese</span><span>' +
+      (a.spese_incluse ? "incluse" : (a.spese_mese ? AM.euro(a.spese_mese) + " / mese" : "escluse")) + "</span></div>";
+    if (a.cauzione) costi += '<div class="voce-costo"><span>Cauzione</span><span>' + AM.euro(a.cauzione) + "</span></div>";
+    el("dettagliCosti").innerHTML = costi;
+
+    if (a.stato !== "pubblicato") {
+      el("zonaRichiesta").innerHTML = '<div class="avviso info">Questo annuncio non e\' pubblicato: lo vedi perche\' sei il proprietario o un amministratore.</div>';
+      return;
+    }
+    preparaRichiesta(db, a);
+  }
+
+  function preparaRichiesta(db, a) {
+    var zona = el("zonaRichiesta");
+    db.auth.getSession().then(function (r) {
+      var sessione = r.data.session;
+      if (!sessione) {
+        zona.innerHTML =
+          '<p style="font-size:0.92rem;color:var(--testo-tenue);margin-bottom:12px">Per inviare una richiesta di prenotazione serve un account gratuito.</p>' +
+          '<a class="bottone ambra" style="width:100%;text-align:center" href="area-riservata.html?dopo=' +
+          encodeURIComponent("annuncio.html?id=" + a.id) + '">Accedi o registrati</a>';
+        return;
+      }
+      if (sessione.user.id === a.proprietario) {
+        zona.innerHTML = '<div class="avviso info">Questo e\' un tuo annuncio: gestiscilo dall\'<a href="area-riservata.html">area riservata</a>.</div>';
+        return;
+      }
+      zona.innerHTML =
+        '<h3 style="font-size:1rem;margin-bottom:4px">Richiedi la prenotazione</h3>' +
+        '<form id="formRichiesta">' +
+        '<label for="riDal">Ingresso da</label><input id="riDal" type="date" required>' +
+        '<label for="riMesi">Per quanti mesi</label><input id="riMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
+        '<label for="riMessaggio">Presentati al proprietario</label>' +
+        '<textarea id="riMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
+        '<button class="bottone ambra" type="submit" style="width:100%;margin-top:14px">Invia la richiesta</button>' +
+        '</form><div id="esitoRichiesta"></div>';
+      document.getElementById("formRichiesta").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var bottone = ev.target.querySelector("button");
+        bottone.disabled = true;
+        db.from("richieste").insert({
+          annuncio_id: a.id,
+          inquilino: sessione.user.id,
+          dal: document.getElementById("riDal").value,
+          mesi: parseInt(document.getElementById("riMesi").value, 10),
+          messaggio: document.getElementById("riMessaggio").value.trim() || null
+        }).then(function (r) {
+          if (r.error) {
+            bottone.disabled = false;
+            document.getElementById("esitoRichiesta").innerHTML =
+              '<div class="avviso errore">Invio non riuscito: ' + AM.testoSicuro(r.error.message) + "</div>";
+            return;
+          }
+          zona.innerHTML = '<div class="avviso ok">Richiesta inviata! Il proprietario la vedra\' nella sua area riservata. Segui l\'esito nella <a href="area-riservata.html">tua area riservata</a>.</div>';
+        });
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

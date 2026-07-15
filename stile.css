@@ -1,0 +1,148 @@
+/* AffittoMese - stile condiviso di tutte le pagine.
+   Identita': verde petrolio (fiducia/casa) + ambra per le call-to-action,
+   volutamente diversa dal blu di ComputoAI. */
+
+:root {
+  --verde: #0f766e;
+  --verde-scuro: #115e59;
+  --verde-chiarissimo: #f0fdfa;
+  --ambra: #d97706;
+  --ambra-scura: #b45309;
+  --testo: #1f2937;
+  --testo-tenue: #6b7280;
+  --bordo: #e5e7eb;
+  --sfondo: #ffffff;
+  --sfondo-tenue: #f9fafb;
+  --rosso: #dc2626;
+  --ok: #16a34a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--testo);
+  background: var(--sfondo);
+  line-height: 1.55;
+}
+
+a { color: var(--verde); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+.testata {
+  position: sticky; top: 0; z-index: 50;
+  height: 68px;
+  background: #fff;
+  border-bottom: 1px solid var(--bordo);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+}
+.testata .logo {
+  font-size: 1.35rem; font-weight: 800; color: var(--verde-scuro);
+  letter-spacing: -0.02em;
+}
+.testata .logo span { color: var(--ambra); }
+.testata nav { display: flex; align-items: center; gap: 14px; }
+
+/* ─── Bottoni ────────────────────────────────────────────────────────────── */
+.bottone {
+  display: inline-block; border: none; cursor: pointer;
+  border-radius: 8px; padding: 10px 18px;
+  font-size: 0.95rem; font-weight: 600;
+  background: var(--verde); color: #fff;
+  transition: background 0.15s;
+}
+.bottone:hover { background: var(--verde-scuro); text-decoration: none; }
+.bottone.ambra { background: var(--ambra); }
+.bottone.ambra:hover { background: var(--ambra-scura); }
+.bottone.secondario {
+  background: #fff; color: var(--verde); border: 1.5px solid var(--verde);
+}
+.bottone.secondario:hover { background: var(--verde-chiarissimo); }
+.bottone.piccolo { padding: 6px 12px; font-size: 0.85rem; }
+.bottone.pericolo { background: #fff; color: var(--rosso); border: 1.5px solid var(--rosso); }
+.bottone.pericolo:hover { background: #fef2f2; }
+.bottone:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ─── Contenitori ────────────────────────────────────────────────────────── */
+.contenitore { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+.scheda {
+  background: #fff; border: 1px solid var(--bordo);
+  border-radius: 12px; padding: 22px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ─── Form ───────────────────────────────────────────────────────────────── */
+label { display: block; font-weight: 600; font-size: 0.88rem; margin: 12px 0 4px; }
+input, select, textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 0.95rem; font-family: inherit; background: #fff; color: var(--testo);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(15,118,110,0.12);
+}
+textarea { resize: vertical; min-height: 90px; }
+.campi-riga { display: flex; gap: 14px; flex-wrap: wrap; }
+.campi-riga > div { flex: 1; min-width: 140px; }
+
+/* ─── Griglia annunci ────────────────────────────────────────────────────── */
+.griglia-annunci {
+  display: grid; gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+}
+.carta-annuncio {
+  border: 1px solid var(--bordo); border-radius: 12px; overflow: hidden;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: box-shadow 0.15s, transform 0.15s;
+  display: block; color: inherit;
+}
+.carta-annuncio:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.10); transform: translateY(-2px);
+  text-decoration: none;
+}
+.carta-annuncio .foto {
+  height: 175px; background: var(--sfondo-tenue) center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--testo-tenue); font-size: 2rem;
+}
+.carta-annuncio .corpo { padding: 14px 16px 16px; }
+.carta-annuncio h3 {
+  font-size: 1rem; margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.carta-annuncio .luogo { color: var(--testo-tenue); font-size: 0.87rem; }
+.carta-annuncio .prezzo { margin-top: 8px; font-size: 1.12rem; font-weight: 800; color: var(--verde-scuro); }
+.carta-annuncio .prezzo small { font-weight: 400; color: var(--testo-tenue); }
+
+.etichetta {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 600;
+  background: var(--verde-chiarissimo); color: var(--verde-scuro);
+}
+.etichetta.grigia { background: var(--sfondo-tenue); color: var(--testo-tenue); }
+.etichetta.ambra  { background: #fef3c7; color: var(--ambra-scura); }
+.etichetta.verde  { background: #dcfce7; color: var(--ok); }
+.etichetta.rossa  { background: #fee2e2; color: var(--rosso); }
+
+/* ─── Messaggi ───────────────────────────────────────────────────────────── */
+.avviso { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 0.92rem; }
+.avviso.errore  { background: #fef2f2; color: var(--rosso); border: 1px solid #fecaca; }
+.avviso.ok      { background: #f0fdf4; color: var(--ok); border: 1px solid #bbf7d0; }
+.avviso.info    { background: var(--verde-chiarissimo); color: var(--verde-scuro); border: 1px solid #99f6e4; }
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+.pie {
+  margin-top: 60px; padding: 28px 20px;
+  background: var(--sfondo-tenue); border-top: 1px solid var(--bordo);
+  text-align: center; color: var(--testo-tenue); font-size: 0.87rem;
+}
+.pie a { margin: 0 8px; }
+
+@media (max-width: 640px) {
+  .testata { padding: 0 12px; }
+  .testata .logo { font-size: 1.15rem; }
+}

@@ -1,0 +1,18 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# La cartella supabase/ contiene gli script di setup del database: sta nel
+# repo per versionarli ma non deve essere servita al pubblico.
+[[redirects]]
+  from = "/supabase/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+# Redirect di comodo: nel frontend chiamiamo /api/nome invece del percorso
+# lungo /.netlify/functions/nome.
+[[redirects]]
+  from = "/api/supabaseConfig"
+  to = "/.netlify/functions/getSupabaseConfig"
+  status = 200
