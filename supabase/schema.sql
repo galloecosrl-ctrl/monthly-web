@@ -1,7 +1,7 @@
 -- ============================================================================
--- AffittoMese - Schema database (MVP)
+-- Monthly - Schema database (MVP)
 -- Da eseguire UNA VOLTA nel SQL Editor di Supabase (Dashboard > SQL Editor)
--- del NUOVO progetto Supabase dedicato ad AffittoMese (non quello di
+-- del NUOVO progetto Supabase dedicato ad Monthly (non quello di
 -- ComputoAI). Rieseguirlo su un database gia' inizializzato segnala errori
 -- "already exists" innocui.
 --

@@ -1,5 +1,5 @@
 -- ============================================================================
--- AffittoMese - Annunci iniziali delle proprieta' Gallo & Co. srl
+-- Monthly - Annunci iniziali delle proprieta' Gallo & Co. srl
 -- Da eseguire nel SQL Editor di Supabase DOPO schema.sql e DOPO che
 -- l'account galloecosrl@gmail.com si e' registrato sul sito (gli annunci
 -- vengono intestati a quell'account).

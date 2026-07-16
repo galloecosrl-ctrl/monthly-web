@@ -1,10 +1,11 @@
-# AffittoMese
+# Monthly
 
 Piattaforma di affitti mensili in stile booking: i proprietari pubblicano camere,
 monolocali, appartamenti e case; studenti, professionisti e lavoratori in trasferta
 inviano richieste di prenotazione per periodi di uno o piu' mesi. Servizio di
-Gallo & Co. srl. **"AffittoMese" e' un nome di lavoro**: quando si sceglie il brand
-definitivo basta un trova-e-sostituisci nei file HTML/CSS e nel `package.json`.
+Gallo & Co. srl. Nome scelto il 16/07/2026: **Monthly** (monthly.com e' occupato
+da un'azienda USA dal 1995; dominio da scegliere tra monthly.it, monthly.rent,
+monthly.casa — da verificare su un registrar — o monthlycasa.com, gia' verificato libero).
 
 Stessa infrastruttura di ComputoAI: sito statico + Netlify Functions + Supabase
 (autenticazione e database PostgreSQL con row-level security), deploy manuale su
@@ -39,7 +40,7 @@ Netlify, repo GitHub separato.
 4. **Annunci Gallo & Co.**: eseguire `supabase/seed-gallo.sql`, poi dall'area
    riservata completare indirizzi e prezzi reali, caricare le foto e pubblicare.
 5. **Dominio**: quando scelto, aggiornare `robots.txt` e `sitemap.xml`.
-6. **GitHub**: creare un repo privato dedicato (es. `galloecosrl-ctrl/affittomese-web`)
+6. **GitHub**: creare un repo privato dedicato (es. `galloecosrl-ctrl/monthly-web`)
    e collegarlo come remote `origin`.
 
 ## Regole di sicurezza (imposte dal database, non dal codice)

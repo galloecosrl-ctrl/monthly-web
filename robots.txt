@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /area-riservata.html
 
-Sitemap: https://www.affittomese.it/sitemap.xml
+Sitemap: https://www.monthly.it/sitemap.xml

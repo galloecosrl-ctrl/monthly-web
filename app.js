@@ -1,4 +1,4 @@
-// AffittoMese - modulo condiviso: connessione a Supabase e utilita' comuni.
+// Monthly - modulo condiviso: connessione a Supabase e utilita' comuni.
 // Espone il globale AM. Le pagine chiamano AM.pronto() e ricevono il client.
 
 (function () {
