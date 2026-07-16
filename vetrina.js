@@ -28,6 +28,7 @@ window.AM_VETRINA = [
     minimo_mesi: 3,
     disponibile_dal: null,
     stato: "pubblicato",
+    prenotazione_immediata: true,
     foto_annunci: [
       { percorso: "/foto/villino-elda/01-camera-lilla.jpg", posizione: 0 },
       { percorso: "/foto/villino-elda/02-giardino.jpg", posizione: 1 },
@@ -44,13 +45,13 @@ window.AM_VETRINA = [
     tipologia: "appartamento",
     citta: "Roma",
     zona: null,
-    descrizione: "Appartamento completo e arredato, ideale per professionisti, professori e lavoratori in trasferta che cercano una base comoda per qualche mese.\n\nContratto regolare a uso transitorio, gestione diretta della proprieta'.",
+    descrizione: "Appartamento completamente ristrutturato e arredato con cura: zona notte con divisorio in doghe di legno e cabina armadio, cucina abitabile attrezzata, bagno moderno con doccia.\n\nIdeale per professionisti, professori e lavoratori in trasferta che cercano una base comoda per qualche mese. Contratto regolare a uso transitorio, gestione diretta della proprieta'.",
     mq: 70,
     camere: 2,
     bagni: 1,
     posti_letto: 3,
     arredato: true,
-    servizi: ["wifi", "lavatrice", "cucina attrezzata"],
+    servizi: ["wifi", "aria condizionata", "lavatrice", "cucina attrezzata", "biancheria inclusa"],
     prezzo_mese: 1200,
     spese_incluse: false,
     spese_mese: null,
@@ -58,6 +59,15 @@ window.AM_VETRINA = [
     minimo_mesi: 1,
     disponibile_dal: null,
     stato: "pubblicato",
-    foto_annunci: []
+    prenotazione_immediata: true,
+    foto_annunci: [
+      { percorso: "/foto/berardi/01-camera.jpg", posizione: 0 },
+      { percorso: "/foto/berardi/02-camera-vista.jpg", posizione: 1 },
+      { percorso: "/foto/berardi/03-cabina-armadio.jpg", posizione: 2 },
+      { percorso: "/foto/berardi/04-cucina.jpg", posizione: 3 },
+      { percorso: "/foto/berardi/05-cucina-dettaglio.jpg", posizione: 4 },
+      { percorso: "/foto/berardi/06-bagno.jpg", posizione: 5 },
+      { percorso: "/foto/berardi/07-ingresso.jpg", posizione: 6 }
+    ]
   }
 ];

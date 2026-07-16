@@ -53,6 +53,9 @@ create table public.annunci (
   minimo_mesi     integer not null default 1,
   disponibile_dal date,
   stato           text not null default 'bozza' check (stato in ('bozza','pubblicato','sospeso')),
+  -- true = prenotazione immediata stile booking: la richiesta nasce gia'
+  -- accettata e i contatti si scambiano subito, senza attesa del proprietario.
+  prenotazione_immediata boolean not null default false,
   creato_il       timestamptz not null default now(),
   aggiornato_il   timestamptz not null default now()
 );
@@ -85,6 +88,17 @@ create table public.richieste (
 
 create index richieste_annuncio_idx on public.richieste (annuncio_id);
 create index richieste_inquilino_idx on public.richieste (inquilino);
+
+-- Due prenotazioni ACCETTATE sullo stesso annuncio non possono sovrapporsi
+-- nel tempo: e' il database a garantirlo, essenziale con la prenotazione
+-- immediata. Il periodo occupato va da "dal" per "mesi" mesi.
+create extension if not exists btree_gist;
+
+alter table public.richieste add constraint richieste_no_sovrapposizioni
+  exclude using gist (
+    annuncio_id with =,
+    daterange(dal, (dal + make_interval(months => mesi))::date, '[)') with &&
+  ) where (stato = 'accettata');
 
 -- ─── FUNZIONI DI SUPPORTO ───────────────────────────────────────────────────
 -- SECURITY DEFINER: leggono le tabelle senza passare dalle policy, per
@@ -227,7 +241,8 @@ create policy "foto: gestione del proprietario"
   ));
 
 -- richieste: l'inquilino crea richieste a proprio nome su annunci pubblicati
--- (non sui propri annunci).
+-- (non sui propri annunci). Nascono 'inviata'; possono nascere direttamente
+-- 'accettata' SOLO se l'annuncio ha la prenotazione immediata.
 create policy "richieste: invio dell'inquilino"
   on public.richieste for insert
   to authenticated
@@ -236,6 +251,8 @@ create policy "richieste: invio dell'inquilino"
     and exists (
       select 1 from public.annunci a
       where a.id = annuncio_id and a.stato = 'pubblicato' and a.proprietario <> auth.uid()
+        and (richieste.stato = 'inviata'
+             or (richieste.stato = 'accettata' and a.prenotazione_immediata))
     )
   );
 

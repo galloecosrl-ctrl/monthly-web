@@ -56,6 +56,7 @@
         <div class="principale" id="fotoPrincipale">🏠</div>
       </div>
       <span class="etichetta" id="etTipologia" style="margin-top:16px;display:inline-block"></span>
+      <span class="etichetta verde" id="etImmediata" style="margin-top:16px;margin-left:6px;display:none">⚡ Prenotazione immediata</span>
       <h1 id="titolo"></h1>
       <div class="luogo" id="luogo"></div>
       <div class="caratteristiche" id="caratteristiche"></div>
@@ -122,6 +123,7 @@
     document.title = a.titolo + " - Monthly";
     el("dettaglio").style.display = "flex";
     el("etTipologia").textContent = AM.TIPOLOGIE[a.tipologia] || a.tipologia;
+    if (a.prenotazione_immediata) el("etImmediata").style.display = "inline-block";
     el("titolo").textContent = a.titolo;
     el("luogo").textContent = a.citta + (a.zona ? " · " + a.zona : "");
     el("prezzo").textContent = AM.euro(a.prezzo_mese);
@@ -199,14 +201,18 @@
         zona.innerHTML = '<div class="avviso info">Questo e\' un tuo annuncio: gestiscilo dall\'<a href="area-riservata.html">area riservata</a>.</div>';
         return;
       }
+      // Prenotazione immediata: la richiesta nasce gia' accettata e i
+      // contatti del proprietario si mostrano subito, stile booking.
+      var immediata = !!a.prenotazione_immediata;
       zona.innerHTML =
-        '<h3 style="font-size:1rem;margin-bottom:4px">Richiedi la prenotazione</h3>' +
+        '<h3 style="font-size:1rem;margin-bottom:4px">' + (immediata ? "Prenota subito" : "Richiedi la prenotazione") + '</h3>' +
+        (immediata ? '<p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:6px">Conferma immediata: appena prenoti ricevi i contatti del proprietario.</p>' : "") +
         '<form id="formRichiesta">' +
         '<label for="riDal">Ingresso da</label><input id="riDal" type="date" required>' +
         '<label for="riMesi">Per quanti mesi</label><input id="riMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
-        '<label for="riMessaggio">Presentati al proprietario</label>' +
+        '<label for="riMessaggio">' + (immediata ? "Un messaggio per il proprietario (facoltativo)" : "Presentati al proprietario") + '</label>' +
         '<textarea id="riMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
-        '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">Invia la richiesta</button>' +
+        '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">' + (immediata ? "Prenota subito" : "Invia la richiesta") + '</button>' +
         '</form><div id="esitoRichiesta"></div>';
       document.getElementById("formRichiesta").addEventListener("submit", function (ev) {
         ev.preventDefault();
@@ -217,15 +223,31 @@
           inquilino: sessione.user.id,
           dal: document.getElementById("riDal").value,
           mesi: parseInt(document.getElementById("riMesi").value, 10),
-          messaggio: document.getElementById("riMessaggio").value.trim() || null
+          messaggio: document.getElementById("riMessaggio").value.trim() || null,
+          stato: immediata ? "accettata" : "inviata"
         }).then(function (r) {
           if (r.error) {
             bottone.disabled = false;
+            var msg = /sovrapposizioni|exclusion/i.test(r.error.message)
+              ? "Il periodo scelto non e' disponibile: e' gia' prenotato. Prova con altre date."
+              : "Invio non riuscito: " + r.error.message;
             document.getElementById("esitoRichiesta").innerHTML =
-              '<div class="avviso errore">Invio non riuscito: ' + AM.testoSicuro(r.error.message) + "</div>";
+              '<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>";
             return;
           }
-          zona.innerHTML = '<div class="avviso ok">Richiesta inviata! Il proprietario la vedra\' nella sua area riservata. Segui l\'esito nella <a href="area-riservata.html">tua area riservata</a>.</div>';
+          if (!immediata) {
+            zona.innerHTML = '<div class="avviso ok">Richiesta inviata! Il proprietario la vedra\' nella sua area riservata. Segui l\'esito nella <a href="area-riservata.html">tua area riservata</a>.</div>';
+            return;
+          }
+          // Prenotazione confermata: si mostrano subito i contatti.
+          db.from("profili").select("nome, email, telefono").eq("id", a.proprietario).single()
+            .then(function (rp) {
+              var p = rp.data || {};
+              zona.innerHTML = '<div class="avviso ok">Prenotazione confermata! 🎉<br>Contatta il proprietario per organizzare l\'ingresso:<br><b>' +
+                AM.testoSicuro(p.nome || "") + "</b><br>" + AM.testoSicuro(p.email || "") +
+                (p.telefono ? "<br>" + AM.testoSicuro(p.telefono) : "") +
+                '<br><br>Trovi tutto anche nella <a href="area-riservata.html">tua area riservata</a>.</div>';
+            });
         });
       });
     });

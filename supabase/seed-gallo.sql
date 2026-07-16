@@ -21,7 +21,7 @@ with andrea as (
   insert into public.annunci
     (proprietario, titolo, tipologia, citta, zona, descrizione,
      camere, bagni, posti_letto, arredato, servizi,
-     prezzo_mese, spese_incluse, cauzione, minimo_mesi, stato)
+     prezzo_mese, spese_incluse, cauzione, minimo_mesi, prenotazione_immediata, stato)
   select id,
     'Villino Elda - Camera in villino con giardino al Pigneto',
     'camera', 'Roma', 'Pigneto',
@@ -33,7 +33,7 @@ with andrea as (
     550.00,  -- SEGNAPOSTO
     true,
     550.00,  -- SEGNAPOSTO
-    3, 'bozza'
+    3, true, 'bozza'
   from andrea
   returning id
 )
@@ -48,19 +48,31 @@ select annuncio.id, f.percorso, f.posizione from annuncio, (values
   ('/foto/villino-elda/07-bagno.jpg', 6)
 ) as f(percorso, posizione);
 
--- Berardi: appartamento arredato (via Berardi 15, Roma). Foto da aggiungere
--- dall'area riservata quando disponibili.
-insert into public.annunci
-  (proprietario, titolo, tipologia, citta, indirizzo, descrizione,
-   mq, camere, bagni, posti_letto, arredato, servizi,
-   prezzo_mese, spese_incluse, minimo_mesi, stato)
-select id,
-  'Berardi - Appartamento arredato in affitto mensile',
-  'appartamento', 'Roma', 'Via Berardi 15',
-  'Appartamento completo e arredato, ideale per professionisti, professori e lavoratori in trasferta che cercano una base comoda per qualche mese.' || E'\n\n' ||
-  'Contratto regolare a uso transitorio, gestione diretta della proprieta''.',
-  70, 2, 1, 3, true,
-  array['wifi','lavatrice','cucina attrezzata']::text[],
-  1200.00,  -- SEGNAPOSTO
-  false, 1, 'bozza'
-from auth.users where email = 'galloecosrl@gmail.com';
+-- Berardi: appartamento ristrutturato e arredato (via Angelo Berardi 15, Roma).
+with annuncio as (
+  insert into public.annunci
+    (proprietario, titolo, tipologia, citta, indirizzo, descrizione,
+     mq, camere, bagni, posti_letto, arredato, servizi,
+     prezzo_mese, spese_incluse, minimo_mesi, prenotazione_immediata, stato)
+  select id,
+    'Berardi - Appartamento arredato in affitto mensile',
+    'appartamento', 'Roma', 'Via Angelo Berardi 15',
+    'Appartamento completamente ristrutturato e arredato con cura: zona notte con divisorio in doghe di legno e cabina armadio, cucina abitabile attrezzata, bagno moderno con doccia.' || E'\n\n' ||
+    'Ideale per professionisti, professori e lavoratori in trasferta che cercano una base comoda per qualche mese. Contratto regolare a uso transitorio, gestione diretta della proprieta''.',
+    70, 2, 1, 3, true,
+    array['wifi','aria condizionata','lavatrice','cucina attrezzata','biancheria inclusa']::text[],
+    1200.00,  -- SEGNAPOSTO
+    false, 1, true, 'bozza'
+  from auth.users where email = 'galloecosrl@gmail.com'
+  returning id
+)
+insert into public.foto_annunci (annuncio_id, percorso, posizione)
+select annuncio.id, f.percorso, f.posizione from annuncio, (values
+  ('/foto/berardi/01-camera.jpg', 0),
+  ('/foto/berardi/02-camera-vista.jpg', 1),
+  ('/foto/berardi/03-cabina-armadio.jpg', 2),
+  ('/foto/berardi/04-cucina.jpg', 3),
+  ('/foto/berardi/05-cucina-dettaglio.jpg', 4),
+  ('/foto/berardi/06-bagno.jpg', 5),
+  ('/foto/berardi/07-ingresso.jpg', 6)
+) as f(percorso, posizione);

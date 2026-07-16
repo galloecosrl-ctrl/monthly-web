@@ -89,6 +89,7 @@
       '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") + "</div>" +
       '<div class="corpo">' +
       '<span class="etichetta">' + (TIPOLOGIE[a.tipologia] || a.tipologia) + "</span>" +
+      (a.prenotazione_immediata ? ' <span class="etichetta verde">⚡ Immediata</span>' : "") +
       "<h3>" + testoSicuro(a.titolo) + "</h3>" +
       '<div class="luogo">' + testoSicuro(luogo) + "</div>" +
       '<div class="prezzo">' + euro(a.prezzo_mese) + ' <small>/ mese' +

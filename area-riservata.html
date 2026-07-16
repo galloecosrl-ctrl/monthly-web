@@ -163,6 +163,13 @@
         </div>
         <div><label for="anDisponibileDal">Disponibile dal</label><input id="anDisponibileDal" type="date"></div>
         <div><label for="anMinimoMesi">Periodo minimo (mesi) *</label><input id="anMinimoMesi" type="number" min="1" value="1" required></div>
+        <div>
+          <label for="anPrenotazione">Prenotazione</label>
+          <select id="anPrenotazione">
+            <option value="false">Su richiesta (accetti tu)</option>
+            <option value="true">⚡ Immediata (stile booking)</option>
+          </select>
+        </div>
       </div>
       <div class="campi-riga">
         <div><label for="anPrezzo">Prezzo al mese (€) *</label><input id="anPrezzo" type="number" min="1" step="0.01" required></div>
@@ -216,8 +223,22 @@
       if (evento === "SIGNED_OUT") location.reload();
     });
   }).catch(function (e) {
-    el("caricamento").className = "avviso errore";
-    el("caricamento").textContent = "Errore di collegamento: " + (e.message || e);
+    // Sito in anteprima (database non ancora attivo): niente errore nudo,
+    // si spiega la situazione e si fa vedere il modulo di pubblicazione.
+    var c = el("caricamento");
+    c.className = "scheda";
+    c.style.maxWidth = "560px";
+    c.style.margin = "48px auto";
+    c.innerHTML =
+      '<h2 style="font-size:1.2rem;margin-bottom:8px">Area riservata in arrivo</h2>' +
+      '<p style="color:var(--testo-tenue);font-size:0.95rem">Il sito e\' in anteprima: registrazione, accesso e pubblicazione degli annunci si attivano con la messa online. Ecco intanto come sara\' il modulo di pubblicazione:</p>' +
+      '<button class="bottone azzurro" style="margin-top:14px" id="apriDemoEditor" type="button">Guarda il modulo di pubblicazione</button>' +
+      '<p style="color:var(--testo-tenue);font-size:0.85rem;margin-top:12px">Per informazioni: <a href="mailto:galloecosrl@gmail.com">galloecosrl@gmail.com</a></p>';
+    document.getElementById("apriDemoEditor").addEventListener("click", function () {
+      apriEditor(null);
+      el("salvaAnnuncio").disabled = true;
+      el("esitoEditor").innerHTML = '<div class="avviso info">Anteprima del modulo: il salvataggio si attiva con la messa online del sito.</div>';
+    });
   });
 
   // ─── Accesso ──────────────────────────────────────────────────────────────
@@ -438,13 +459,14 @@
   el("nuovoAnnuncio").addEventListener("click", function () { apriEditor(null); });
   el("chiudiEditor").addEventListener("click", function () {
     el("editorAnnuncio").close();
-    caricaAnnunciMiei();
+    if (db && utente) caricaAnnunciMiei();
   });
 
   function apriEditor(a) {
     annuncioInModifica = a;
     el("editorTitolo").textContent = a ? "Modifica annuncio" : "Nuovo annuncio";
     el("esitoEditor").innerHTML = "";
+    el("salvaAnnuncio").disabled = false;
     el("anTitolo").value = a ? a.titolo : "";
     el("anTipologia").value = a ? a.tipologia : "camera";
     el("anCitta").value = a ? a.citta : "";
@@ -458,6 +480,7 @@
     el("anArredato").value = a ? String(a.arredato) : "true";
     el("anDisponibileDal").value = a && a.disponibile_dal ? a.disponibile_dal : "";
     el("anMinimoMesi").value = a ? a.minimo_mesi : 1;
+    el("anPrenotazione").value = a ? String(a.prenotazione_immediata) : "false";
     el("anPrezzo").value = a ? a.prezzo_mese : "";
     el("anSpeseIncluse").value = a ? String(a.spese_incluse) : "true";
     el("anSpeseMese").value = a && a.spese_mese ? a.spese_mese : "";
@@ -496,6 +519,7 @@
 
   el("formAnnuncio").addEventListener("submit", function (ev) {
     ev.preventDefault();
+    if (!db || !utente) return; // modalita' anteprima: il salvataggio e' spento
     var bottone = el("salvaAnnuncio");
     bottone.disabled = true;
     el("esitoEditor").innerHTML = "";
@@ -514,6 +538,7 @@
       arredato: el("anArredato").value === "true",
       disponibile_dal: el("anDisponibileDal").value || null,
       minimo_mesi: valNum("anMinimoMesi", true) || 1,
+      prenotazione_immediata: el("anPrenotazione").value === "true",
       prezzo_mese: valNum("anPrezzo", false),
       spese_incluse: el("anSpeseIncluse").value === "true",
       spese_mese: valNum("anSpeseMese", false),

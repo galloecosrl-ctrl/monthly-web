@@ -168,7 +168,7 @@
     griglia.innerHTML = "";
     AM.pronto().then(function (db) {
       var q = db.from("annunci")
-        .select("id, titolo, tipologia, citta, zona, prezzo_mese, spese_incluse, foto_annunci(percorso, posizione)")
+        .select("id, titolo, tipologia, citta, zona, prezzo_mese, spese_incluse, prenotazione_immediata, foto_annunci(percorso, posizione)")
         .eq("stato", "pubblicato")
         .order("creato_il", { ascending: false })
         .limit(24);
