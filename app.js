@@ -81,10 +81,23 @@
     return urlFoto(client, foto[0].percorso);
   }
 
+  // Prezzo di partenza di un annuncio: il minimo tra le camere prenotabili
+  // separatamente, se esistono (nel qual caso la dicitura e' "da X / mese"),
+  // altrimenti il prezzo dell'annuncio intero.
+  function prezzoDa(a) {
+    var camere = a.camere_annuncio || [];
+    if (!camere.length) return { prezzo: a.prezzo_mese, da: false };
+    var minimo = camere.reduce(function (m, c) {
+      return Math.min(m, Number(c.prezzo_mese));
+    }, Infinity);
+    return { prezzo: minimo, da: true };
+  }
+
   // Card annuncio per le griglie (home e area riservata).
   function cartaAnnuncio(client, a) {
     var img = copertina(client, a);
     var luogo = a.citta + (a.zona ? " · " + a.zona : "");
+    var p = prezzoDa(a);
     return '<a class="carta-annuncio" href="annuncio.html?id=' + a.id + '">' +
       '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") + "</div>" +
       '<div class="corpo">' +
@@ -92,7 +105,7 @@
       (a.prenotazione_immediata ? ' <span class="etichetta verde">⚡ Immediata</span>' : "") +
       "<h3>" + testoSicuro(a.titolo) + "</h3>" +
       '<div class="luogo">' + testoSicuro(luogo) + "</div>" +
-      '<div class="prezzo">' + euro(a.prezzo_mese) + ' <small>/ mese' +
+      '<div class="prezzo">' + (p.da ? '<small>da</small> ' : "") + euro(p.prezzo) + ' <small>/ mese' +
       (a.spese_incluse ? ", spese incluse" : "") + "</small></div>" +
       "</div></a>";
   }
@@ -106,6 +119,7 @@
     dataIt: dataIt,
     urlFoto: urlFoto,
     copertina: copertina,
+    prezzoDa: prezzoDa,
     cartaAnnuncio: cartaAnnuncio
   };
 })();

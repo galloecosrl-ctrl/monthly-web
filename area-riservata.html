@@ -182,6 +182,15 @@
       </div>
       <label for="anServizi">Servizi (separati da virgola)</label>
       <input id="anServizi" type="text" placeholder="wifi, lavatrice, aria condizionata, cucina attrezzata">
+      <div style="margin-top:14px">
+        <label style="margin-bottom:0">Camere prenotabili separatamente (facoltativo)</label>
+        <p style="font-size:0.83rem;color:var(--testo-tenue);margin:2px 0 8px">
+          Se l'alloggio si affitta per camera, aggiungile qui: ognuna avra' prezzo e
+          disponibilita' propri e l'annuncio mostrera' "da &lt;prezzo minimo&gt; / mese".
+        </p>
+        <div id="listaCamereEditor"></div>
+        <button class="bottone secondario piccolo" type="button" id="aggiungiCamera">+ Aggiungi camera</button>
+      </div>
       <div id="zonaFoto" style="display:none">
         <label for="anFoto">Aggiungi foto (JPG/PNG, puoi selezionarne piu' di una)</label>
         <input id="anFoto" type="file" accept="image/jpeg,image/png,image/webp" multiple>
@@ -397,7 +406,7 @@
 
   function caricaAnnunciMiei() {
     db.from("annunci")
-      .select("*, foto_annunci(id, percorso, posizione)")
+      .select("*, foto_annunci(id, percorso, posizione), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
       .eq("proprietario", utente.id)
       .order("creato_il", { ascending: false })
       .then(function (r) {
@@ -406,12 +415,13 @@
         if (!r.data.length) { cont.innerHTML = '<span style="color:var(--testo-tenue)">Nessun annuncio: crea il primo con il pulsante qui sopra.</span>'; return; }
         cont.innerHTML = r.data.map(function (a) {
           var s = STATI_ANNUNCIO[a.stato];
+          var p = AM.prezzoDa(a);
           return '<div class="riga-annuncio"><div style="flex:1;min-width:220px">' +
             '<b>' + AM.testoSicuro(a.titolo) + "</b> " +
             '<span class="etichetta ' + s.classe + '">' + s.testo + "</span>" +
             '<div style="font-size:0.88rem;color:var(--testo-tenue)">' +
             (AM.TIPOLOGIE[a.tipologia] || a.tipologia) + " · " + AM.testoSicuro(a.citta) + " · " +
-            AM.euro(a.prezzo_mese) + "/mese · " + (a.foto_annunci || []).length + " foto</div></div>" +
+            (p.da ? "da " : "") + AM.euro(p.prezzo) + "/mese · " + (a.foto_annunci || []).length + " foto</div></div>" +
             '<div class="azioni">' +
             '<a class="bottone secondario piccolo" href="annuncio.html?id=' + a.id + '">Anteprima</a>' +
             '<button class="bottone secondario piccolo" data-modifica="' + a.id + '" type="button">Modifica</button>' +
@@ -486,10 +496,70 @@
     el("anSpeseMese").value = a && a.spese_mese ? a.spese_mese : "";
     el("anCauzione").value = a && a.cauzione ? a.cauzione : "";
     el("anServizi").value = a ? (a.servizi || []).join(", ") : "";
+    el("listaCamereEditor").innerHTML = "";
+    ((a && a.camere_annuncio) || [])
+      .slice().sort(function (x, y) { return x.posizione - y.posizione; })
+      .forEach(aggiungiRigaCamera);
     el("zonaFoto").style.display = a ? "block" : "none";
     el("anFoto").value = "";
     if (a) mostraMiniature(a.foto_annunci || []);
     el("editorAnnuncio").showModal();
+  }
+
+  // ─── Camere prenotabili separatamente (righe dinamiche nell'editor) ──────
+  el("aggiungiCamera").addEventListener("click", function () { aggiungiRigaCamera(null); });
+
+  function aggiungiRigaCamera(c) {
+    var riga = document.createElement("div");
+    riga.className = "campi-riga riga-camera-editor";
+    riga.style.cssText = "align-items:flex-end;margin-bottom:8px";
+    riga.innerHTML =
+      '<div style="flex:2"><label>Nome camera</label><input type="text" class="camNome" placeholder="Es. Camera gialla" value="' +
+      (c ? AM.testoSicuro(c.nome) : "") + '"></div>' +
+      '<div><label>Prezzo al mese (€)</label><input type="number" min="1" step="0.01" class="camPrezzo" value="' +
+      (c ? c.prezzo_mese : "") + '"></div>' +
+      '<div><label>Bagno</label><select class="camBagno">' +
+      '<option value="condiviso"' + (c && c.bagno === "condiviso" ? " selected" : "") + ">Condiviso</option>" +
+      '<option value="privato"' + (c && c.bagno === "privato" ? " selected" : "") + ">Privato</option>" +
+      "</select></div>" +
+      '<div style="flex:0"><button class="bottone pericolo piccolo" type="button">✕</button></div>';
+    riga.dataset.foto = (c && c.foto) || "";
+    riga.querySelector("button").addEventListener("click", function () { riga.remove(); });
+    el("listaCamereEditor").appendChild(riga);
+  }
+
+  // Legge le righe camera compilate; le righe senza nome o prezzo si ignorano.
+  function leggiCamereEditor() {
+    return Array.prototype.map.call(
+      document.querySelectorAll("#listaCamereEditor .riga-camera-editor"),
+      function (riga, i) {
+        var nome = riga.querySelector(".camNome").value.trim();
+        var prezzo = parseFloat(riga.querySelector(".camPrezzo").value);
+        if (!nome || !(prezzo > 0)) return null;
+        return {
+          nome: nome,
+          prezzo_mese: prezzo,
+          bagno: riga.querySelector(".camBagno").value,
+          foto: riga.dataset.foto || null,
+          posizione: i
+        };
+      }
+    ).filter(Boolean);
+  }
+
+  // Riallinea le camere sul database: si cancellano e si reinseriscono.
+  // (Le richieste gia' legate a una camera cancellata decadono con lei:
+  // accettabile nell'MVP, il proprietario modifica le camere di rado.)
+  function salvaCamere(annuncioId) {
+    var camere = leggiCamereEditor().map(function (c) {
+      c.annuncio_id = annuncioId;
+      return c;
+    });
+    return db.from("camere_annuncio").delete().eq("annuncio_id", annuncioId)
+      .then(function () {
+        if (!camere.length) return { error: null };
+        return db.from("camere_annuncio").insert(camere);
+      });
   }
 
   function mostraMiniature(foto) {
@@ -566,22 +636,29 @@
       el("editorTitolo").textContent = "Modifica annuncio";
       el("zonaFoto").style.display = "block";
 
-      var file = el("anFoto").files;
-      if (!file.length) {
-        bottone.disabled = false;
-        el("esitoEditor").innerHTML = '<div class="avviso ok">Annuncio salvato' +
-          (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
-        mostraMiniature(r.data.foto_annunci || []);
-        return;
-      }
-      caricaFoto(r.data, file).then(function (esito) {
-        bottone.disabled = false;
-        el("anFoto").value = "";
-        el("esitoEditor").innerHTML = esito.errori
-          ? '<div class="avviso errore">Annuncio salvato ma ' + esito.errori + " foto non caricate: riprova.</div>"
-          : '<div class="avviso ok">Annuncio e foto salvati' +
+      salvaCamere(r.data.id).then(function (rc) {
+        if (rc && rc.error) {
+          bottone.disabled = false;
+          el("esitoEditor").innerHTML = '<div class="avviso errore">Annuncio salvato ma camere non salvate: ' + AM.testoSicuro(rc.error.message) + "</div>";
+          return;
+        }
+        var file = el("anFoto").files;
+        if (!file.length) {
+          bottone.disabled = false;
+          el("esitoEditor").innerHTML = '<div class="avviso ok">Annuncio salvato' +
             (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
-        ricaricaFotoEditor();
+          mostraMiniature(r.data.foto_annunci || []);
+          return;
+        }
+        caricaFoto(r.data, file).then(function (esito) {
+          bottone.disabled = false;
+          el("anFoto").value = "";
+          el("esitoEditor").innerHTML = esito.errori
+            ? '<div class="avviso errore">Annuncio salvato ma ' + esito.errori + " foto non caricate: riprova.</div>"
+            : '<div class="avviso ok">Annuncio e foto salvati' +
+              (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
+          ricaricaFotoEditor();
+        });
       });
     });
   });

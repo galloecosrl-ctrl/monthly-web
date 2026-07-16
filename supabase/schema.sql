@@ -74,10 +74,29 @@ create table public.foto_annunci (
 
 create index foto_annunci_annuncio_idx on public.foto_annunci (annuncio_id);
 
+-- Le camere prenotabili separatamente di un annuncio (es. villino con piu'
+-- camere, ognuna col suo prezzo e la sua disponibilita'). Un annuncio senza
+-- righe qui si prenota per intero; con righe qui si prenota LA CAMERA.
+-- In vetrina il prezzo diventa "da X euro/mese" (minimo tra le camere).
+create table public.camere_annuncio (
+  id          bigint generated always as identity primary key,
+  annuncio_id uuid not null references public.annunci (id) on delete cascade,
+  nome        text not null,
+  prezzo_mese numeric(10,2) not null,
+  bagno       text not null default 'condiviso' check (bagno in ('privato','condiviso')),
+  -- Foto rappresentativa della camera (percorso del sito o dello Storage).
+  foto        text,
+  posizione   integer not null default 0
+);
+
+create index camere_annuncio_annuncio_idx on public.camere_annuncio (annuncio_id);
+
 -- Le richieste di prenotazione degli inquilini.
 create table public.richieste (
   id          uuid primary key default gen_random_uuid(),
   annuncio_id uuid not null references public.annunci (id) on delete cascade,
+  -- Camera scelta, per gli annunci a camere; null = intero alloggio.
+  camera_id   bigint references public.camere_annuncio (id) on delete cascade,
   inquilino   uuid not null references auth.users (id) on delete cascade,
   dal         date not null,
   mesi        integer not null check (mesi >= 1),
@@ -89,14 +108,15 @@ create table public.richieste (
 create index richieste_annuncio_idx on public.richieste (annuncio_id);
 create index richieste_inquilino_idx on public.richieste (inquilino);
 
--- Due prenotazioni ACCETTATE sullo stesso annuncio non possono sovrapporsi
--- nel tempo: e' il database a garantirlo, essenziale con la prenotazione
--- immediata. Il periodo occupato va da "dal" per "mesi" mesi.
+-- Due prenotazioni ACCETTATE sulla stessa unita' (stessa camera, o lo stesso
+-- annuncio intero) non possono sovrapporsi nel tempo: e' il database a
+-- garantirlo, essenziale con la prenotazione immediata.
 create extension if not exists btree_gist;
 
 alter table public.richieste add constraint richieste_no_sovrapposizioni
   exclude using gist (
     annuncio_id with =,
+    coalesce(camera_id, 0) with =,
     daterange(dal, (dal + make_interval(months => mesi))::date, '[)') with &&
   ) where (stato = 'accettata');
 
@@ -172,10 +192,11 @@ create trigger annunci_touch
 -- Le garanzie di riservatezza sono imposte qui, dal database stesso,
 -- qualunque cosa faccia il codice applicativo.
 
-alter table public.profili      enable row level security;
-alter table public.annunci      enable row level security;
-alter table public.foto_annunci enable row level security;
-alter table public.richieste    enable row level security;
+alter table public.profili         enable row level security;
+alter table public.annunci         enable row level security;
+alter table public.foto_annunci    enable row level security;
+alter table public.camere_annuncio enable row level security;
+alter table public.richieste       enable row level security;
 
 -- profili: ognuno vede e modifica il proprio; i contatti degli altri solo
 -- nei casi previsti da puo_vedere_profilo(); l'admin vede tutti.
@@ -240,6 +261,28 @@ create policy "foto: gestione del proprietario"
     where a.id = annuncio_id and (a.proprietario = auth.uid() or public.sono_admin())
   ));
 
+-- camere_annuncio: seguono la visibilita' dell'annuncio, come le foto.
+create policy "camere: visibili con l'annuncio"
+  on public.camere_annuncio for select
+  to anon, authenticated
+  using (exists (
+    select 1 from public.annunci a
+    where a.id = annuncio_id
+      and (a.stato = 'pubblicato' or a.proprietario = auth.uid() or public.sono_admin())
+  ));
+
+create policy "camere: gestione del proprietario"
+  on public.camere_annuncio for all
+  to authenticated
+  using (exists (
+    select 1 from public.annunci a
+    where a.id = annuncio_id and (a.proprietario = auth.uid() or public.sono_admin())
+  ))
+  with check (exists (
+    select 1 from public.annunci a
+    where a.id = annuncio_id and (a.proprietario = auth.uid() or public.sono_admin())
+  ));
+
 -- richieste: l'inquilino crea richieste a proprio nome su annunci pubblicati
 -- (non sui propri annunci). Nascono 'inviata'; possono nascere direttamente
 -- 'accettata' SOLO se l'annuncio ha la prenotazione immediata.
@@ -254,6 +297,11 @@ create policy "richieste: invio dell'inquilino"
         and (richieste.stato = 'inviata'
              or (richieste.stato = 'accettata' and a.prenotazione_immediata))
     )
+    -- La camera indicata, se c'e', deve appartenere all'annuncio.
+    and (camera_id is null or exists (
+      select 1 from public.camere_annuncio c
+      where c.id = camera_id and c.annuncio_id = richieste.annuncio_id
+    ))
   );
 
 -- Le vedono l'inquilino che le ha inviate e il proprietario dell'annuncio.

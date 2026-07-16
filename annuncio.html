@@ -37,6 +37,17 @@
     .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--blu-scuro); }
     .prezzo-grande small { font-size: 0.95rem; font-weight: 400; color: var(--testo-tenue); }
     .voce-costo { display: flex; justify-content: space-between; font-size: 0.92rem; margin-top: 6px; color: var(--testo-tenue); }
+    .riga-camera {
+      display: flex; gap: 14px; align-items: center;
+      padding: 12px 0; border-top: 1px solid var(--bordo); flex-wrap: wrap;
+    }
+    .riga-camera:first-of-type { border-top: none; }
+    .riga-camera .thumb {
+      width: 104px; height: 72px; border-radius: 8px; flex: 0 0 auto;
+      background: var(--sfondo-tenue) center/cover no-repeat;
+    }
+    .riga-camera .prezzo-camera { margin-left: auto; font-weight: 800; color: var(--blu-scuro); white-space: nowrap; }
+    .riga-camera .prezzo-camera small { font-weight: 400; color: var(--testo-tenue); }
   </style>
 </head>
 <body>
@@ -60,6 +71,11 @@
       <h1 id="titolo"></h1>
       <div class="luogo" id="luogo"></div>
       <div class="caratteristiche" id="caratteristiche"></div>
+      <div id="zonaCamere" style="display:none">
+        <h2 style="font-size:1.1rem;margin:14px 0 4px">Le camere</h2>
+        <p style="font-size:0.88rem;color:var(--testo-tenue);margin-bottom:8px">Ogni camera si prenota separatamente, col suo prezzo.</p>
+        <div id="listaCamere"></div>
+      </div>
       <div class="servizi" id="servizi"></div>
       <h2 style="font-size:1.1rem;margin:8px 0 6px">Descrizione</h2>
       <p class="descrizione" id="descrizione"></p>
@@ -101,7 +117,7 @@
 
   AM.pronto().then(function (db) {
     return db.from("annunci")
-      .select("*, foto_annunci(percorso, posizione)")
+      .select("*, foto_annunci(percorso, posizione), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
       .eq("id", idAnnuncio)
       .maybeSingle()
       .then(function (r) {
@@ -126,8 +142,23 @@
     if (a.prenotazione_immediata) el("etImmediata").style.display = "inline-block";
     el("titolo").textContent = a.titolo;
     el("luogo").textContent = a.citta + (a.zona ? " · " + a.zona : "");
-    el("prezzo").textContent = AM.euro(a.prezzo_mese);
+    var p = AM.prezzoDa(a);
+    el("prezzo").innerHTML = (p.da ? '<small style="font-size:1rem;font-weight:400;color:var(--testo-tenue)">da</small> ' : "") + AM.euro(p.prezzo);
     el("descrizione").textContent = a.descrizione || "";
+
+    // Camere prenotabili separatamente
+    var camere = (a.camere_annuncio || []).slice().sort(function (x, y) { return x.posizione - y.posizione; });
+    if (camere.length) {
+      el("zonaCamere").style.display = "block";
+      el("listaCamere").innerHTML = camere.map(function (c) {
+        return '<div class="riga-camera">' +
+          '<div class="thumb"' + (c.foto ? ' style="background-image:url(\'' + AM.urlFoto(db, c.foto) + '\')"' : "") + "></div>" +
+          '<div><b>' + AM.testoSicuro(c.nome) + "</b><br>" +
+          '<span class="etichetta ' + (c.bagno === "privato" ? "" : "grigia") + '">bagno ' + c.bagno + "</span></div>" +
+          '<div class="prezzo-camera">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small></div>" +
+          "</div>";
+      }).join("");
+    }
 
     // Galleria
     var foto = (a.foto_annunci || []).sort(function (x, y) { return x.posizione - y.posizione; });
@@ -204,10 +235,19 @@
       // Prenotazione immediata: la richiesta nasce gia' accettata e i
       // contatti del proprietario si mostrano subito, stile booking.
       var immediata = !!a.prenotazione_immediata;
+      var camere = (a.camere_annuncio || []).slice().sort(function (x, y) { return x.posizione - y.posizione; });
+      var campoCamera = camere.length
+        ? '<label for="riCamera">Quale camera</label><select id="riCamera" required>' +
+          camere.map(function (c) {
+            return '<option value="' + c.id + '">' + AM.testoSicuro(c.nome) + " — " +
+              AM.euro(c.prezzo_mese) + "/mese, bagno " + c.bagno + "</option>";
+          }).join("") + "</select>"
+        : "";
       zona.innerHTML =
         '<h3 style="font-size:1rem;margin-bottom:4px">' + (immediata ? "Prenota subito" : "Richiedi la prenotazione") + '</h3>' +
         (immediata ? '<p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:6px">Conferma immediata: appena prenoti ricevi i contatti del proprietario.</p>' : "") +
         '<form id="formRichiesta">' +
+        campoCamera +
         '<label for="riDal">Ingresso da</label><input id="riDal" type="date" required>' +
         '<label for="riMesi">Per quanti mesi</label><input id="riMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
         '<label for="riMessaggio">' + (immediata ? "Un messaggio per il proprietario (facoltativo)" : "Presentati al proprietario") + '</label>' +
@@ -220,6 +260,7 @@
         bottone.disabled = true;
         db.from("richieste").insert({
           annuncio_id: a.id,
+          camera_id: camere.length ? parseInt(document.getElementById("riCamera").value, 10) : null,
           inquilino: sessione.user.id,
           dal: document.getElementById("riDal").value,
           mesi: parseInt(document.getElementById("riMesi").value, 10),

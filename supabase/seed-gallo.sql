@@ -9,44 +9,50 @@
 -- Le foto puntano a file serviti dal sito stesso (/foto/...): il frontend
 -- riconosce i percorsi che iniziano con "/" e non passa dallo Storage.
 --
--- ATTENZIONE: PREZZI E CAUZIONI SONO SEGNAPOSTO da confermare. Gli annunci
--- nascono in stato 'bozza': si rifiniscono e si pubblicano dall'area
--- riservata.
+-- Prezzi Villino Elda: REALI (confermati dall'utente il 16/07/2026).
+-- Prezzo Berardi: ancora SEGNAPOSTO da confermare. Gli annunci nascono in
+-- stato 'bozza': si rifiniscono e si pubblicano dall'area riservata.
 -- ============================================================================
 
--- Villino Elda: camera in villino con giardino, Pigneto (via Auconi).
+-- Villino Elda: 4 camere prenotabili separatamente, Pigneto (via Auconi).
 with andrea as (
   select id from auth.users where email = 'galloecosrl@gmail.com'
 ), annuncio as (
   insert into public.annunci
     (proprietario, titolo, tipologia, citta, zona, descrizione,
      camere, bagni, posti_letto, arredato, servizi,
-     prezzo_mese, spese_incluse, cauzione, minimo_mesi, prenotazione_immediata, stato)
+     prezzo_mese, spese_incluse, minimo_mesi, prenotazione_immediata, stato)
   select id,
-    'Villino Elda - Camera in villino con giardino al Pigneto',
+    'Villino Elda - Camere in villino con giardino al Pigneto',
     'camera', 'Roma', 'Pigneto',
-    'Camera arredata in un villino indipendente con giardino, nel cuore del Pigneto, a 200 metri dalla fermata Malatesta della Metro C.' || E'\n\n' ||
-    'La casa e'' pensata per studenti e giovani lavoratori: ogni camera ha il suo carattere, con bagno dedicato, e si condividono la cucina e il giardino, perfetto per studiare o rilassarsi all''aperto.' || E'\n\n' ||
-    'Gestione familiare con anni di esperienza nell''ospitalita'' (ex B&B pluripremiato su Booking.com): contratto regolare a uso transitorio, zero sorprese.',
-    1, 1, 2, true,
-    array['wifi','giardino','cucina condivisa','lavatrice','aria condizionata','biancheria inclusa']::text[],
-    550.00,  -- SEGNAPOSTO
-    true,
-    550.00,  -- SEGNAPOSTO
-    3, true, 'bozza'
+    'Villino indipendente nel cuore del Pigneto, a 200 metri dalla fermata Malatesta della Metro C: 4 camere arredate, 3 bagni, salone e cucina in comune e 600 mq di giardino, perfetto per studiare o rilassarsi all''aperto.' || E'\n\n' ||
+    'Ogni camera ha il suo carattere e si prenota separatamente, col suo prezzo: due hanno il bagno privato, due condividono il bagno. La casa e'' pensata per studenti e giovani lavoratori.' || E'\n\n' ||
+    'Gestione familiare con anni di esperienza nell''ospitalita'' (ex B&B pluripremiato su Booking.com): contratto regolare a uso transitorio, zero sorprese. Cauzione pari a una mensilita''.',
+    4, 3, 4, true,
+    array['wifi','giardino 600 mq','salone comune','cucina condivisa','lavatrice','aria condizionata','biancheria inclusa']::text[],
+    640.00,  -- prezzo di partenza (minimo tra le camere)
+    true, 3, true, 'bozza'
   from andrea
   returning id
+), foto as (
+  insert into public.foto_annunci (annuncio_id, percorso, posizione)
+  select annuncio.id, f.percorso, f.posizione from annuncio, (values
+    ('/foto/villino-elda/01-camera-lilla.jpg', 0),
+    ('/foto/villino-elda/02-giardino.jpg', 1),
+    ('/foto/villino-elda/03-camera-pesca.jpg', 2),
+    ('/foto/villino-elda/04-camera-verde.jpg', 3),
+    ('/foto/villino-elda/05-camera-gialla.jpg', 4),
+    ('/foto/villino-elda/06-esterno.jpg', 5),
+    ('/foto/villino-elda/07-bagno.jpg', 6)
+  ) as f(percorso, posizione)
 )
-insert into public.foto_annunci (annuncio_id, percorso, posizione)
-select annuncio.id, f.percorso, f.posizione from annuncio, (values
-  ('/foto/villino-elda/01-camera-lilla.jpg', 0),
-  ('/foto/villino-elda/02-giardino.jpg', 1),
-  ('/foto/villino-elda/03-camera-pesca.jpg', 2),
-  ('/foto/villino-elda/04-camera-verde.jpg', 3),
-  ('/foto/villino-elda/05-camera-gialla.jpg', 4),
-  ('/foto/villino-elda/06-esterno.jpg', 5),
-  ('/foto/villino-elda/07-bagno.jpg', 6)
-) as f(percorso, posizione);
+insert into public.camere_annuncio (annuncio_id, nome, prezzo_mese, bagno, foto, posizione)
+select annuncio.id, c.nome, c.prezzo_mese, c.bagno, c.foto, c.posizione from annuncio, (values
+  ('Camera gialla',    680.00, 'privato',   '/foto/villino-elda/05-camera-gialla.jpg', 0),
+  ('Camera viola',     680.00, 'privato',   '/foto/villino-elda/01-camera-lilla.jpg',  1),
+  ('Camera verde',     640.00, 'condiviso', '/foto/villino-elda/04-camera-verde.jpg',  2),
+  ('Camera arancione', 640.00, 'condiviso', '/foto/villino-elda/03-camera-pesca.jpg',  3)
+) as c(nome, prezzo_mese, bagno, foto, posizione);
 
 -- Berardi: appartamento ristrutturato e arredato (via Angelo Berardi 15, Roma).
 with annuncio as (
