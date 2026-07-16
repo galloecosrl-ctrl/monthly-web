@@ -13,7 +13,7 @@
 -- richiesta, per potergli rispondere).
 -- ============================================================================
 
--- ─── TABELLE ────────────────────────────────────────────────────────────────
+-- --- TABELLE ----------------------------------------------------------------
 
 -- Collega gli utenti di Supabase Auth (auth.users) al loro profilo pubblico.
 -- Creato automaticamente dal trigger alla registrazione.
@@ -122,7 +122,7 @@ alter table public.richieste add constraint richieste_no_sovrapposizioni
     daterange(dal, (dal + make_interval(months => mesi))::date, '[)') with &&
   ) where (stato = 'accettata');
 
--- ─── FUNZIONI DI SUPPORTO ───────────────────────────────────────────────────
+-- --- FUNZIONI DI SUPPORTO ---------------------------------------------------
 -- SECURITY DEFINER: leggono le tabelle senza passare dalle policy, per
 -- evitare ricorsioni RLS nelle policy che le usano.
 
@@ -190,7 +190,7 @@ create trigger annunci_touch
   before update on public.annunci
   for each row execute function public.touch_annuncio();
 
--- ─── ROW-LEVEL SECURITY ─────────────────────────────────────────────────────
+-- --- ROW-LEVEL SECURITY -----------------------------------------------------
 -- Le garanzie di riservatezza sono imposte qui, dal database stesso,
 -- qualunque cosa faccia il codice applicativo.
 
@@ -285,7 +285,7 @@ create policy "camere: gestione del proprietario"
     where a.id = annuncio_id and (a.proprietario = auth.uid() or public.sono_admin())
   ));
 
--- richieste: la prenotazione e' DIRETTA stile booking — l'inquilino prenota
+-- richieste: la prenotazione e' DIRETTA stile booking -- l'inquilino prenota
 -- a proprio nome su annunci pubblicati (non sui propri) e la prenotazione
 -- nasce gia' 'accettata'. La disponibilita' la garantisce il vincolo di
 -- non sovrapposizione qui sopra.
@@ -337,7 +337,7 @@ create policy "richieste: risposta del proprietario"
 -- possono solo consultare gli annunci pubblicati. Il service_role (solo
 -- server-side) bypassa RLS per definizione: mai usarlo nel browser.
 
--- ─── STORAGE: bucket per le foto degli annunci ──────────────────────────────
+-- --- STORAGE: bucket per le foto degli annunci ------------------------------
 -- Bucket pubblico in lettura (le foto degli annunci sono pubbliche per
 -- natura); scrittura solo nella propria cartella "<uid>/...".
 
@@ -366,7 +366,7 @@ create policy "foto-annunci: cancellazione nella propria cartella"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- ─── NOMINA ADMIN ───────────────────────────────────────────────────────────
+-- --- NOMINA ADMIN -----------------------------------------------------------
 -- Da eseguire DOPO che l'account si e' registrato sul sito:
 --
 --   update public.profili set ruolo = 'admin'
