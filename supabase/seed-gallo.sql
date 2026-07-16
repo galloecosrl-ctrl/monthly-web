@@ -29,7 +29,7 @@ with andrea as (
     'Ogni camera ha il suo carattere e si prenota separatamente, col suo prezzo: due hanno il bagno privato, due condividono il bagno. La casa e'' pensata per studenti e giovani lavoratori.' || E'\n\n' ||
     'Gestione familiare con anni di esperienza nell''ospitalita'' (ex B&B pluripremiato su Booking.com): contratto regolare a uso transitorio, zero sorprese. Cauzione pari a una mensilita''.',
     4, 3, 4, true,
-    array['wifi','giardino 600 mq','salone comune','cucina condivisa','lavatrice','aria condizionata','biancheria inclusa']::text[],
+    array['wifi','giardino 600 mq','salone comune','cucina condivisa','lavatrice','aria condizionata']::text[],
     640.00,  -- prezzo di partenza (minimo tra le camere)
     true, 3, 'bozza'
   from andrea
@@ -54,6 +54,23 @@ select annuncio.id, c.nome, c.prezzo_mese, c.bagno, c.foto, c.posizione from ann
   ('Camera arancione', 640.00, 'condiviso', '/foto/villino-elda/03-camera-pesca.jpg',  3)
 ) as c(nome, prezzo_mese, bagno, foto, posizione);
 
+-- Collega le foto del Villino alle rispettive camere (si mostrano quando
+-- l'inquilino seleziona la camera).
+update public.foto_annunci f set camera_id = c.id
+from public.camere_annuncio c
+where c.annuncio_id = f.annuncio_id
+  and ((c.nome = 'Camera viola'     and f.percorso like '%camera-lilla%')
+    or (c.nome = 'Camera gialla'    and f.percorso like '%camera-gialla%')
+    or (c.nome = 'Camera verde'     and f.percorso like '%camera-verde%')
+    or (c.nome = 'Camera arancione' and f.percorso like '%camera-pesca%'));
+
+-- La foto del bagno condiviso vale per entrambe le camere che lo condividono.
+insert into public.foto_annunci (annuncio_id, percorso, posizione, camera_id)
+select c.annuncio_id, '/foto/villino-elda/07-bagno.jpg', 10 + c.posizione, c.id
+from public.camere_annuncio c
+where c.bagno = 'condiviso'
+  and c.annuncio_id in (select annuncio_id from public.foto_annunci where percorso like '%villino-elda%');
+
 -- Berardi: appartamento ristrutturato e arredato (via Angelo Berardi 15, Roma).
 with annuncio as (
   insert into public.annunci
@@ -66,7 +83,7 @@ with annuncio as (
     'Appartamento completamente ristrutturato e arredato con cura: zona notte con divisorio in doghe di legno e cabina armadio, cucina abitabile attrezzata, bagno moderno con doccia.' || E'\n\n' ||
     'Ideale per professionisti, professori e lavoratori in trasferta che cercano una base comoda per qualche mese. Contratto regolare a uso transitorio, gestione diretta della proprieta''.',
     70, 2, 1, 3, true,
-    array['wifi','aria condizionata','lavatrice','cucina attrezzata','biancheria inclusa']::text[],
+    array['wifi','aria condizionata','lavatrice','cucina attrezzata']::text[],
     1200.00,  -- SEGNAPOSTO
     false, 1, 'bozza'
   from auth.users where email = 'galloecosrl@gmail.com'

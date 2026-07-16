@@ -65,6 +65,19 @@
     }
     .riga-camera .prezzo-camera { margin-left: auto; font-weight: 800; color: var(--blu-scuro); white-space: nowrap; }
     .riga-camera .prezzo-camera small { font-weight: 400; color: var(--testo-tenue); }
+    /* Foto della camera selezionata: si aprono sotto la riga illuminata */
+    .foto-camera {
+      flex-basis: 100%; display: none; gap: 8px; flex-wrap: wrap;
+      padding-top: 10px; border-top: 1px dashed #bfdbfe; margin-top: 4px;
+    }
+    .riga-camera.scelta .foto-camera { display: flex; }
+    .foto-camera .fotina {
+      width: 130px; height: 92px; border-radius: 8px; cursor: pointer;
+      background: var(--sfondo-tenue) center/cover no-repeat;
+      border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s;
+    }
+    .foto-camera .fotina:hover { border-color: var(--azzurro); transform: scale(1.03); }
+    #mappa { width: 100%; height: 300px; border: 0; border-radius: 12px; }
     /* Pannello di prenotazione */
     .voce-panello { border-top: 1px solid var(--bordo); padding: 12px 0; font-size: 0.88rem; }
     .voce-panello h4 { font-size: 0.92rem; margin-bottom: 4px; color: var(--blu-scuro); }
@@ -105,7 +118,12 @@
         <p style="font-size:0.88rem;color:var(--testo-tenue);margin-bottom:8px">Ogni camera si prenota separatamente, col suo prezzo.</p>
         <div id="listaCamere"></div>
       </div>
-      <div class="servizi" id="servizi"></div>
+      <div id="zonaMappa" style="display:none">
+        <h2 style="font-size:1.1rem;margin:18px 0 4px">Dove si trova</h2>
+        <p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:8px">Posizione indicativa della zona: l'indirizzo esatto si riceve con la prenotazione.</p>
+        <iframe id="mappa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mappa della zona"></iframe>
+      </div>
+      <div class="servizi" id="servizi" style="margin-top:16px"></div>
       <h2 style="font-size:1.1rem;margin:8px 0 6px">Descrizione</h2>
       <p class="descrizione" id="descrizione"></p>
     </div>
@@ -144,6 +162,7 @@
 
 <footer class="pie">
   <div>Monthly e' un servizio di Gallo &amp; Co. srl</div>
+  <div style="margin-top:8px;font-size:0.78rem">Gallo &amp; Co. Srl · Via Auconi 28, 00176 Roma · P.IVA e C.F. 18242101006 · REA RM-1771198, Camera di Commercio di Roma · Capitale sociale € 3.000,00 i.v.</div>
   <div style="margin-top:6px"><a href="privacy.html">Privacy</a>
     <a href="contratti.html">Contratti e adempimenti</a></div>
 </footer>
@@ -170,7 +189,7 @@
 
   AM.pronto().then(function (db) {
     return db.from("annunci")
-      .select("*, foto_annunci(percorso, posizione), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
+      .select("*, foto_annunci(percorso, posizione, camera_id), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
       .eq("id", idAnnuncio)
       .maybeSingle()
       .then(function (r) {
@@ -219,6 +238,17 @@
 
     // Camere prenotabili separatamente: righe cliccabili che "accendono"
     // il pannello di prenotazione a destra.
+    // Le foto della camera: quelle assegnate dal proprietario (camera_id),
+    // altrimenti almeno la foto principale della camera.
+    function fotoDellaCamera(c) {
+      var percorsi = (a.foto_annunci || [])
+        .filter(function (f) { return f.camera_id === c.id; })
+        .sort(function (x, y) { return x.posizione - y.posizione; })
+        .map(function (f) { return f.percorso; });
+      if (!percorsi.length && c.foto) percorsi = [c.foto];
+      return percorsi.filter(function (p, i) { return percorsi.indexOf(p) === i; });
+    }
+
     if (camere.length) {
       el("zonaCamere").style.display = "block";
       el("listaCamere").innerHTML = "";
@@ -230,20 +260,48 @@
           '<div><b>' + AM.testoSicuro(c.nome) + '</b><span class="spunta">✓ selezionata</span><br>' +
           '<span class="etichetta ' + (c.bagno === "privato" ? "" : "grigia") + '">bagno ' + c.bagno + "</span></div>" +
           '<div class="prezzo-camera">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small></div>";
+        // Striscia di foto della camera, visibile solo quando e' selezionata.
+        var striscia = document.createElement("div");
+        striscia.className = "foto-camera";
+        fotoDellaCamera(c).forEach(function (percorso) {
+          var fotina = document.createElement("div");
+          fotina.className = "fotina";
+          fotina.style.backgroundImage = "url('" + AM.urlFoto(db, percorso) + "')";
+          fotina.title = "Guarda in grande";
+          fotina.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            el("fotoPrincipale").style.backgroundImage = fotina.style.backgroundImage;
+            el("fotoPrincipale").scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+          striscia.appendChild(fotina);
+        });
+        riga.appendChild(striscia);
         riga.addEventListener("click", function () {
           cameraScelta = c;
           document.querySelectorAll(".riga-camera").forEach(function (r) { r.classList.remove("scelta"); });
           riga.classList.add("scelta");
           aggiornaPrezzo();
-          el("zonaPrenota").scrollIntoView({ behavior: "smooth", block: "nearest" });
         });
         el("listaCamere").appendChild(riga);
       });
     }
     aggiornaPrezzo();
 
-    // Galleria
-    var foto = (a.foto_annunci || []).sort(function (x, y) { return x.posizione - y.posizione; });
+    // Mappa della zona (citta' + quartiere: l'indirizzo esatto resta privato).
+    var luogoMappa = a.citta + (a.zona ? ", " + a.zona : "") + ", Italia";
+    el("mappa").src = "https://www.google.com/maps?q=" + encodeURIComponent(luogoMappa) + "&z=14&output=embed";
+    el("zonaMappa").style.display = "block";
+
+    // Galleria: tutte le foto dell'annuncio, senza doppioni (la stessa foto
+    // puo' essere assegnata a piu' camere, es. un bagno condiviso).
+    var visti = {};
+    var foto = (a.foto_annunci || []).slice()
+      .sort(function (x, y) { return x.posizione - y.posizione; })
+      .filter(function (f) {
+        if (visti[f.percorso]) return false;
+        visti[f.percorso] = true;
+        return true;
+      });
     if (foto.length) {
       var principale = el("fotoPrincipale");
       principale.textContent = "";

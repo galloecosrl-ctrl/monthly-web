@@ -88,6 +88,12 @@ create table public.camere_annuncio (
 
 create index camere_annuncio_annuncio_idx on public.camere_annuncio (annuncio_id);
 
+-- Una foto puo' riferirsi a una specifica camera dell'annuncio (la camera,
+-- il suo bagno...): si mostra in evidenza quando l'inquilino la seleziona.
+-- null = foto generale dell'alloggio.
+alter table public.foto_annunci
+  add column camera_id bigint references public.camere_annuncio (id) on delete cascade;
+
 -- Le richieste di prenotazione degli inquilini.
 create table public.richieste (
   id          uuid primary key default gen_random_uuid(),

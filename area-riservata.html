@@ -200,6 +200,7 @@
 
 <footer class="pie">
   <div>Monthly e' un servizio di Gallo &amp; Co. srl</div>
+  <div style="margin-top:8px;font-size:0.78rem">Gallo &amp; Co. Srl · Via Auconi 28, 00176 Roma · P.IVA e C.F. 18242101006 · REA RM-1771198, Camera di Commercio di Roma · Capitale sociale € 3.000,00 i.v.</div>
   <div style="margin-top:6px"><a href="privacy.html">Privacy</a>
     <a href="contratti.html">Contratti e adempimenti</a></div>
 </footer>
@@ -516,7 +517,10 @@
       '<option value="condiviso"' + (c && c.bagno === "condiviso" ? " selected" : "") + ">Condiviso</option>" +
       '<option value="privato"' + (c && c.bagno === "privato" ? " selected" : "") + ">Privato</option>" +
       "</select></div>" +
+      '<div style="flex:2"><label>Foto della camera (e del suo bagno)</label>' +
+      '<input type="file" class="camFoto" accept="image/jpeg,image/png,image/webp" multiple></div>' +
       '<div style="flex:0"><button class="bottone pericolo piccolo" type="button">✕</button></div>';
+    riga.dataset.id = (c && c.id) || "";
     riga.dataset.foto = (c && c.foto) || "";
     riga.querySelector("button").addEventListener("click", function () { riga.remove(); });
     el("listaCamereEditor").appendChild(riga);
@@ -531,29 +535,81 @@
         var prezzo = parseFloat(riga.querySelector(".camPrezzo").value);
         if (!nome || !(prezzo > 0)) return null;
         return {
+          id: riga.dataset.id ? parseInt(riga.dataset.id, 10) : null,
           nome: nome,
           prezzo_mese: prezzo,
           bagno: riga.querySelector(".camBagno").value,
           foto: riga.dataset.foto || null,
-          posizione: i
+          posizione: i,
+          file: riga.querySelector(".camFoto").files,
+          riga: riga
         };
       }
     ).filter(Boolean);
   }
 
-  // Riallinea le camere sul database: si cancellano e si reinseriscono.
-  // (Le richieste gia' legate a una camera cancellata decadono con lei:
-  // accettabile nell'MVP, il proprietario modifica le camere di rado.)
+  // Riallinea le camere sul database SENZA cancellare quelle esistenti
+  // (gli id restano stabili: prenotazioni e foto agganciate sopravvivono):
+  // aggiorna le righe con id, inserisce le nuove, elimina solo le rimosse.
+  // Poi carica le eventuali foto scelte per ogni camera.
   function salvaCamere(annuncioId) {
-    var camere = leggiCamereEditor().map(function (c) {
-      c.annuncio_id = annuncioId;
-      return c;
-    });
-    return db.from("camere_annuncio").delete().eq("annuncio_id", annuncioId)
-      .then(function () {
-        if (!camere.length) return { error: null };
-        return db.from("camere_annuncio").insert(camere);
+    var righe = leggiCamereEditor();
+    var idTenuti = righe.map(function (c) { return c.id; }).filter(Boolean);
+
+    var pulizia = db.from("camere_annuncio").delete().eq("annuncio_id", annuncioId);
+    if (idTenuti.length) pulizia = pulizia.not("id", "in", "(" + idTenuti.join(",") + ")");
+
+    return pulizia.then(function (r) {
+      if (r.error) return r;
+      var catena = Promise.resolve({ error: null });
+      righe.forEach(function (c) {
+        catena = catena.then(function (esito) {
+          if (esito && esito.error) return esito;
+          var dati = { annuncio_id: annuncioId, nome: c.nome, prezzo_mese: c.prezzo_mese, bagno: c.bagno, foto: c.foto, posizione: c.posizione };
+          var operazione = c.id
+            ? db.from("camere_annuncio").update(dati).eq("id", c.id).select("id").single()
+            : db.from("camere_annuncio").insert(dati).select("id").single();
+          return operazione.then(function (r2) {
+            if (r2.error) return r2;
+            c.id = r2.data.id;
+            c.riga.dataset.id = c.id;
+            return caricaFotoCamera(annuncioId, c);
+          });
+        });
       });
+      return catena;
+    });
+  }
+
+  // Carica le foto scelte per una camera nel bucket e le aggancia (camera_id).
+  // La prima foto caricata diventa anche la miniatura della camera, se manca.
+  function caricaFotoCamera(annuncioId, c) {
+    if (!c.file || !c.file.length) return Promise.resolve({ error: null });
+    var catena = Promise.resolve({ error: null });
+    Array.prototype.forEach.call(c.file, function (f, i) {
+      catena = catena.then(function (esito) {
+        if (esito && esito.error) return esito;
+        var estensione = (f.name.split(".").pop() || "jpg").toLowerCase();
+        var percorso = utente.id + "/" + annuncioId + "/camera-" + c.id + "-" + Date.now() + "-" + i + "." + estensione;
+        return db.storage.from("foto-annunci").upload(percorso, f, { contentType: f.type })
+          .then(function (r) {
+            if (r.error) return r;
+            var dopo = [db.from("foto_annunci").insert({ annuncio_id: annuncioId, percorso: percorso, posizione: 50 + c.posizione * 10 + i, camera_id: c.id })];
+            if (!c.foto && i === 0) {
+              c.foto = percorso;
+              dopo.push(db.from("camere_annuncio").update({ foto: percorso }).eq("id", c.id));
+            }
+            return Promise.all(dopo).then(function (rr) {
+              var conErrore = rr.find(function (x) { return x.error; });
+              return conErrore || { error: null };
+            });
+          });
+      });
+    });
+    return catena.then(function (esito) {
+      c.riga.querySelector(".camFoto").value = "";
+      return esito;
+    });
   }
 
   function mostraMiniature(foto) {

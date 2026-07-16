@@ -20,7 +20,7 @@ window.AM_VETRINA = [
     bagni: 3,
     posti_letto: 4,
     arredato: true,
-    servizi: ["wifi", "giardino 600 mq", "salone comune", "cucina condivisa", "lavatrice", "aria condizionata", "biancheria inclusa"],
+    servizi: ["wifi", "giardino 600 mq", "salone comune", "cucina condivisa", "lavatrice", "aria condizionata"],
     prezzo_mese: 640,
     spese_incluse: true,
     spese_mese: null,
@@ -35,13 +35,14 @@ window.AM_VETRINA = [
       { id: 4, nome: "Camera arancione", prezzo_mese: 640, bagno: "condiviso", foto: "/foto/villino-elda/03-camera-pesca.jpg", posizione: 3 }
     ],
     foto_annunci: [
-      { percorso: "/foto/villino-elda/01-camera-lilla.jpg", posizione: 0 },
-      { percorso: "/foto/villino-elda/02-giardino.jpg", posizione: 1 },
-      { percorso: "/foto/villino-elda/03-camera-pesca.jpg", posizione: 2 },
-      { percorso: "/foto/villino-elda/04-camera-verde.jpg", posizione: 3 },
-      { percorso: "/foto/villino-elda/05-camera-gialla.jpg", posizione: 4 },
-      { percorso: "/foto/villino-elda/06-esterno.jpg", posizione: 5 },
-      { percorso: "/foto/villino-elda/07-bagno.jpg", posizione: 6 }
+      { percorso: "/foto/villino-elda/01-camera-lilla.jpg", posizione: 0, camera_id: 2 },
+      { percorso: "/foto/villino-elda/02-giardino.jpg", posizione: 1, camera_id: null },
+      { percorso: "/foto/villino-elda/03-camera-pesca.jpg", posizione: 2, camera_id: 4 },
+      { percorso: "/foto/villino-elda/04-camera-verde.jpg", posizione: 3, camera_id: 3 },
+      { percorso: "/foto/villino-elda/05-camera-gialla.jpg", posizione: 4, camera_id: 1 },
+      { percorso: "/foto/villino-elda/06-esterno.jpg", posizione: 5, camera_id: null },
+      { percorso: "/foto/villino-elda/07-bagno.jpg", posizione: 6, camera_id: 3 },
+      { percorso: "/foto/villino-elda/07-bagno.jpg", posizione: 7, camera_id: 4 }
     ]
   },
   {
@@ -56,7 +57,7 @@ window.AM_VETRINA = [
     bagni: 1,
     posti_letto: 3,
     arredato: true,
-    servizi: ["wifi", "aria condizionata", "lavatrice", "cucina attrezzata", "biancheria inclusa"],
+    servizi: ["wifi", "aria condizionata", "lavatrice", "cucina attrezzata"],
     prezzo_mese: 1200,
     spese_incluse: false,
     spese_mese: null,
