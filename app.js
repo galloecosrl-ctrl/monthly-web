@@ -109,7 +109,65 @@
       "</div></a>";
   }
 
+  // Autocompletamento citta' (mondiale): suggerimenti da Photon/OpenStreetMap
+  // mentre si digita, selezionabili con click. Nessuna chiave API richiesta.
+  function autocompletaCitta(input) {
+    var box = document.createElement("div");
+    box.className = "suggerimenti-citta";
+    input.parentNode.style.position = "relative";
+    input.parentNode.appendChild(box);
+    input.autocomplete = "off";
+    var timer = null;
+    var ultimaRicerca = "";
+
+    input.addEventListener("input", function () {
+      var q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 2) { box.style.display = "none"; return; }
+      timer = setTimeout(function () {
+        ultimaRicerca = q;
+        fetch("https://photon.komoot.io/api/?q=" + encodeURIComponent(q) +
+              "&limit=6&osm_tag=place:city&osm_tag=place:town&osm_tag=place:village")
+          .then(function (r) { return r.json(); })
+          .then(function (dati) {
+            if (input.value.trim() !== ultimaRicerca) return; // risposta superata
+            var visti = {};
+            var voci = (dati.features || []).map(function (f) {
+              var p = f.properties;
+              return { nome: p.name, dettaglio: [p.state, p.country].filter(Boolean).join(", ") };
+            }).filter(function (v) {
+              var chiave = v.nome + "|" + v.dettaglio;
+              if (!v.nome || visti[chiave]) return false;
+              visti[chiave] = true;
+              return true;
+            });
+            if (!voci.length) { box.style.display = "none"; return; }
+            box.innerHTML = "";
+            voci.forEach(function (v) {
+              var voce = document.createElement("div");
+              voce.className = "voce";
+              voce.innerHTML = "<b>" + testoSicuro(v.nome) + "</b> <span>" + testoSicuro(v.dettaglio) + "</span>";
+              // mousedown, non click: scatta prima del blur del campo.
+              voce.addEventListener("mousedown", function (ev) {
+                ev.preventDefault();
+                input.value = v.nome;
+                box.style.display = "none";
+              });
+              box.appendChild(voce);
+            });
+            box.style.display = "block";
+          })
+          .catch(function () { box.style.display = "none"; });
+      }, 250);
+    });
+
+    input.addEventListener("blur", function () {
+      setTimeout(function () { box.style.display = "none"; }, 150);
+    });
+  }
+
   window.AM = {
+    autocompletaCitta: autocompletaCitta,
     pronto: creaClient,
     TIPOLOGIE: TIPOLOGIE,
     STATI_RICHIESTA: STATI_RICHIESTA,
