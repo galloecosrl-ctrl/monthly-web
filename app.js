@@ -43,8 +43,8 @@
 
   var STATI_RICHIESTA = {
     inviata: { testo: "In attesa", classe: "ambra" },
-    accettata: { testo: "Accettata", classe: "verde" },
-    rifiutata: { testo: "Rifiutata", classe: "rossa" },
+    accettata: { testo: "Confermata", classe: "verde" },
+    rifiutata: { testo: "Cancellata dal proprietario", classe: "rossa" },
     annullata: { testo: "Annullata", classe: "grigia" }
   };
 
@@ -102,7 +102,6 @@
       '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") + "</div>" +
       '<div class="corpo">' +
       '<span class="etichetta">' + (TIPOLOGIE[a.tipologia] || a.tipologia) + "</span>" +
-      (a.prenotazione_immediata ? ' <span class="etichetta verde">⚡ Immediata</span>' : "") +
       "<h3>" + testoSicuro(a.titolo) + "</h3>" +
       '<div class="luogo">' + testoSicuro(luogo) + "</div>" +
       '<div class="prezzo">' + (p.da ? '<small>da</small> ' : "") + euro(p.prezzo) + ' <small>/ mese' +

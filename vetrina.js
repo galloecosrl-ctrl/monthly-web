@@ -28,7 +28,6 @@ window.AM_VETRINA = [
     minimo_mesi: 3,
     disponibile_dal: null,
     stato: "pubblicato",
-    prenotazione_immediata: true,
     camere_annuncio: [
       { id: 1, nome: "Camera gialla", prezzo_mese: 680, bagno: "privato", foto: "/foto/villino-elda/05-camera-gialla.jpg", posizione: 0 },
       { id: 2, nome: "Camera viola", prezzo_mese: 680, bagno: "privato", foto: "/foto/villino-elda/01-camera-lilla.jpg", posizione: 1 },
@@ -65,7 +64,6 @@ window.AM_VETRINA = [
     minimo_mesi: 1,
     disponibile_dal: null,
     stato: "pubblicato",
-    prenotazione_immediata: true,
     foto_annunci: [
       { percorso: "/foto/berardi/01-camera.jpg", posizione: 0 },
       { percorso: "/foto/berardi/02-camera-vista.jpg", posizione: 1 },

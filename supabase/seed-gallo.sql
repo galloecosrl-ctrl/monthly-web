@@ -21,7 +21,7 @@ with andrea as (
   insert into public.annunci
     (proprietario, titolo, tipologia, citta, zona, descrizione,
      camere, bagni, posti_letto, arredato, servizi,
-     prezzo_mese, spese_incluse, minimo_mesi, prenotazione_immediata, stato)
+     prezzo_mese, spese_incluse, minimo_mesi, stato)
   select id,
     'Villino Elda - Camere in villino con giardino al Pigneto',
     'camera', 'Roma', 'Pigneto',
@@ -31,7 +31,7 @@ with andrea as (
     4, 3, 4, true,
     array['wifi','giardino 600 mq','salone comune','cucina condivisa','lavatrice','aria condizionata','biancheria inclusa']::text[],
     640.00,  -- prezzo di partenza (minimo tra le camere)
-    true, 3, true, 'bozza'
+    true, 3, 'bozza'
   from andrea
   returning id
 ), foto as (
@@ -59,7 +59,7 @@ with annuncio as (
   insert into public.annunci
     (proprietario, titolo, tipologia, citta, indirizzo, descrizione,
      mq, camere, bagni, posti_letto, arredato, servizi,
-     prezzo_mese, spese_incluse, minimo_mesi, prenotazione_immediata, stato)
+     prezzo_mese, spese_incluse, minimo_mesi, stato)
   select id,
     'Berardi - Appartamento arredato in affitto mensile',
     'appartamento', 'Roma', 'Via Angelo Berardi 15',
@@ -68,7 +68,7 @@ with annuncio as (
     70, 2, 1, 3, true,
     array['wifi','aria condizionata','lavatrice','cucina attrezzata','biancheria inclusa']::text[],
     1200.00,  -- SEGNAPOSTO
-    false, 1, true, 'bozza'
+    false, 1, 'bozza'
   from auth.users where email = 'galloecosrl@gmail.com'
   returning id
 )

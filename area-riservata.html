@@ -89,15 +89,15 @@
         <div><label for="prTelefono">Telefono</label><input id="prTelefono" type="tel" autocomplete="tel"></div>
       </div>
       <p style="font-size:0.83rem;color:var(--testo-tenue);margin-top:8px">
-        Nome e telefono vengono mostrati solo alle persone con cui entri in trattativa
-        (il proprietario a cui invii una richiesta, o l'inquilino a cui la accetti).
+        Nome e telefono vengono mostrati solo alle persone con cui entri in contatto
+        (il proprietario da cui prenoti, o l'inquilino che prenota da te).
       </p>
       <button class="bottone piccolo" style="margin-top:8px" id="salvaProfilo" type="button">Salva profilo</button>
       <span id="esitoProfilo" style="font-size:0.85rem;margin-left:10px"></span>
     </div>
 
     <div class="scheda">
-      <h2>Le tue richieste di prenotazione</h2>
+      <h2>Le tue prenotazioni</h2>
       <div id="listaRichiesteMie"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
     </div>
 
@@ -110,7 +110,7 @@
     </div>
 
     <div class="scheda">
-      <h2>Richieste ricevute sui tuoi annunci</h2>
+      <h2>Prenotazioni ricevute sui tuoi annunci</h2>
       <div id="listaRichiesteRicevute"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
     </div>
 
@@ -163,13 +163,6 @@
         </div>
         <div><label for="anDisponibileDal">Disponibile dal</label><input id="anDisponibileDal" type="date"></div>
         <div><label for="anMinimoMesi">Periodo minimo (mesi) *</label><input id="anMinimoMesi" type="number" min="1" value="1" required></div>
-        <div>
-          <label for="anPrenotazione">Prenotazione</label>
-          <select id="anPrenotazione">
-            <option value="false">Su richiesta (accetti tu)</option>
-            <option value="true">⚡ Immediata (stile booking)</option>
-          </select>
-        </div>
       </div>
       <div class="campi-riga">
         <div><label for="anPrezzo">Prezzo al mese (€) *</label><input id="anPrezzo" type="number" min="1" step="0.01" required></div>
@@ -207,7 +200,8 @@
 
 <footer class="pie">
   <div>Monthly e' un servizio di Gallo &amp; Co. srl</div>
-  <div style="margin-top:6px"><a href="privacy.html">Privacy</a></div>
+  <div style="margin-top:6px"><a href="privacy.html">Privacy</a>
+    <a href="contratti.html">Contratti e adempimenti</a></div>
 </footer>
 
 <script src="app.js"></script>
@@ -381,7 +375,7 @@
                 (p.telefono ? " · " + AM.testoSicuro(p.telefono) : "") + "</div>";
             }
             html += '</div><div class="azioni"><span class="etichetta ' + s.classe + '">' + s.testo + "</span>";
-            if (ri.stato === "inviata") {
+            if (ri.stato === "inviata" || ri.stato === "accettata") {
               html += '<button class="bottone pericolo piccolo" data-annulla="' + ri.id + '" type="button">Annulla</button>';
             }
             html += "</div></div>";
@@ -389,6 +383,7 @@
           }).join("");
           cont.querySelectorAll("[data-annulla]").forEach(function (b) {
             b.addEventListener("click", function () {
+              if (!confirm("Condizioni di cancellazione: gratuita fino a 30 giorni prima dell'ingresso; dopo, penale pari a una mensilita' da corrispondere al proprietario.\n\nConfermi l'annullamento?")) return;
               db.from("richieste").update({ stato: "annullata" }).eq("id", b.dataset.annulla)
                 .then(caricaRichiesteMie);
             });
@@ -490,7 +485,6 @@
     el("anArredato").value = a ? String(a.arredato) : "true";
     el("anDisponibileDal").value = a && a.disponibile_dal ? a.disponibile_dal : "";
     el("anMinimoMesi").value = a ? a.minimo_mesi : 1;
-    el("anPrenotazione").value = a ? String(a.prenotazione_immediata) : "false";
     el("anPrezzo").value = a ? a.prezzo_mese : "";
     el("anSpeseIncluse").value = a ? String(a.spese_incluse) : "true";
     el("anSpeseMese").value = a && a.spese_mese ? a.spese_mese : "";
@@ -608,7 +602,6 @@
       arredato: el("anArredato").value === "true",
       disponibile_dal: el("anDisponibileDal").value || null,
       minimo_mesi: valNum("anMinimoMesi", true) || 1,
-      prenotazione_immediata: el("anPrenotazione").value === "true",
       prezzo_mese: valNum("anPrezzo", false),
       spese_incluse: el("anSpeseIncluse").value === "true",
       spese_mese: valNum("anSpeseMese", false),

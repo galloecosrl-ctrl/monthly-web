@@ -39,15 +39,44 @@
     .voce-costo { display: flex; justify-content: space-between; font-size: 0.92rem; margin-top: 6px; color: var(--testo-tenue); }
     .riga-camera {
       display: flex; gap: 14px; align-items: center;
-      padding: 12px 0; border-top: 1px solid var(--bordo); flex-wrap: wrap;
+      padding: 12px 14px; margin-bottom: 10px; flex-wrap: wrap;
+      border: 1.5px solid var(--bordo); border-radius: 12px;
+      cursor: pointer; background: #fff;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
     }
-    .riga-camera:first-of-type { border-top: none; }
+    .riga-camera:hover {
+      transform: scale(1.015);
+      border-color: var(--azzurro);
+      background: var(--azzurro-chiaro);
+      box-shadow: 0 6px 18px rgba(27,47,94,0.12);
+    }
+    .riga-camera.scelta {
+      border-color: var(--azzurro); border-width: 2px;
+      background: var(--azzurro-chiaro);
+    }
+    .riga-camera.scelta .spunta { display: inline-block; }
+    .riga-camera .spunta {
+      display: none; margin-left: 6px;
+      color: var(--azzurro-scuro); font-weight: 700; font-size: 0.85rem;
+    }
     .riga-camera .thumb {
       width: 104px; height: 72px; border-radius: 8px; flex: 0 0 auto;
       background: var(--sfondo-tenue) center/cover no-repeat;
     }
     .riga-camera .prezzo-camera { margin-left: auto; font-weight: 800; color: var(--blu-scuro); white-space: nowrap; }
     .riga-camera .prezzo-camera small { font-weight: 400; color: var(--testo-tenue); }
+    /* Pannello di prenotazione */
+    .voce-panello { border-top: 1px solid var(--bordo); padding: 12px 0; font-size: 0.88rem; }
+    .voce-panello h4 { font-size: 0.92rem; margin-bottom: 4px; color: var(--blu-scuro); }
+    .voce-panello ul { list-style: none; padding: 0; margin: 0; }
+    .voce-panello li { padding: 2px 0; color: var(--testo-tenue); }
+    .voce-panello li::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+    .voce-panello li.no::before { content: "• "; color: var(--testo-tenue); }
+    .voce-panello a { font-weight: 600; }
+    .camera-scelta-box {
+      background: var(--azzurro-chiaro); border-radius: 8px;
+      padding: 8px 12px; margin-top: 8px; font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -67,7 +96,7 @@
         <div class="principale" id="fotoPrincipale">🏠</div>
       </div>
       <span class="etichetta" id="etTipologia" style="margin-top:16px;display:inline-block"></span>
-      <span class="etichetta verde" id="etImmediata" style="margin-top:16px;margin-left:6px;display:none">⚡ Prenotazione immediata</span>
+      <span class="etichetta verde" style="margin-top:16px;margin-left:6px;display:inline-block">⚡ Prenotazione diretta</span>
       <h1 id="titolo"></h1>
       <div class="luogo" id="luogo"></div>
       <div class="caratteristiche" id="caratteristiche"></div>
@@ -83,16 +112,40 @@
 
     <div class="colonna-laterale scheda">
       <div class="prezzo-grande"><span id="prezzo"></span> <small>/ mese</small></div>
-      <div id="dettagliCosti"></div>
-      <hr style="border:none;border-top:1px solid var(--bordo);margin:16px 0">
-      <div id="zonaRichiesta"></div>
+      <div id="cameraScelta"></div>
+      <div id="dettagliCosti" style="margin:8px 0 12px"></div>
+
+      <div class="voce-panello">
+        <h4>Cancellazione</h4>
+        <ul>
+          <li>Gratuita fino a 30 giorni prima dell'ingresso</li>
+          <li class="no">Dopo, penale pari a una mensilita'</li>
+        </ul>
+      </div>
+      <div class="voce-panello">
+        <h4>Cosa include</h4>
+        <ul id="pnInclude"></ul>
+      </div>
+      <div class="voce-panello">
+        <h4>Il contratto</h4>
+        <p style="color:var(--testo-tenue)">Il contratto di locazione transitoria si firma direttamente
+        tra proprietario e inquilino dopo la prenotazione. Monthly vi accompagna con il fac-simile
+        e la checklist degli adempimenti.<br><a href="contratti.html">Come funziona il contratto →</a></p>
+      </div>
+
+      <div class="voce-panello" style="border-bottom:none">
+        <h4>Prenota</h4>
+        <p style="color:var(--testo-tenue);margin-bottom:4px">Conferma immediata: al termine ricevi i contatti del proprietario.</p>
+        <div id="zonaPrenota"></div>
+      </div>
     </div>
   </div>
 </main>
 
 <footer class="pie">
   <div>Monthly e' un servizio di Gallo &amp; Co. srl</div>
-  <div style="margin-top:6px"><a href="privacy.html">Privacy</a></div>
+  <div style="margin-top:6px"><a href="privacy.html">Privacy</a>
+    <a href="contratti.html">Contratti e adempimenti</a></div>
 </footer>
 
 <script src="app.js"></script>
@@ -134,31 +187,60 @@
     errore("Non riusciamo a caricare l'annuncio. " + (e.message || ""));
   });
 
+  // Camera selezionata (per gli annunci a camere) e prezzo base dell'annuncio.
+  var cameraScelta = null;
+
   function mostra(db, a) {
     stato.innerHTML = "";
     document.title = a.titolo + " - Monthly";
     el("dettaglio").style.display = "flex";
     el("etTipologia").textContent = AM.TIPOLOGIE[a.tipologia] || a.tipologia;
-    if (a.prenotazione_immediata) el("etImmediata").style.display = "inline-block";
     el("titolo").textContent = a.titolo;
     el("luogo").textContent = a.citta + (a.zona ? " · " + a.zona : "");
-    var p = AM.prezzoDa(a);
-    el("prezzo").innerHTML = (p.da ? '<small style="font-size:1rem;font-weight:400;color:var(--testo-tenue)">da</small> ' : "") + AM.euro(p.prezzo);
     el("descrizione").textContent = a.descrizione || "";
 
-    // Camere prenotabili separatamente
     var camere = (a.camere_annuncio || []).slice().sort(function (x, y) { return x.posizione - y.posizione; });
+
+    // Prezzo nel pannello: "da <minimo>" finche' non si sceglie una camera.
+    function aggiornaPrezzo() {
+      if (cameraScelta) {
+        el("prezzo").innerHTML = AM.euro(cameraScelta.prezzo_mese);
+        el("cameraScelta").innerHTML = '<div class="camera-scelta-box">🛏 <b>' +
+          AM.testoSicuro(cameraScelta.nome) + "</b> · bagno " + cameraScelta.bagno + "</div>";
+      } else {
+        var p = AM.prezzoDa(a);
+        el("prezzo").innerHTML = (p.da ? '<small style="font-size:1rem;font-weight:400;color:var(--testo-tenue)">da</small> ' : "") + AM.euro(p.prezzo);
+        el("cameraScelta").innerHTML = camere.length
+          ? '<div style="font-size:0.85rem;color:var(--testo-tenue);margin-top:4px">Scegli una camera dall\'elenco per prenotare.</div>'
+          : "";
+      }
+      aggiornaInclude(a, camere);
+    }
+
+    // Camere prenotabili separatamente: righe cliccabili che "accendono"
+    // il pannello di prenotazione a destra.
     if (camere.length) {
       el("zonaCamere").style.display = "block";
-      el("listaCamere").innerHTML = camere.map(function (c) {
-        return '<div class="riga-camera">' +
+      el("listaCamere").innerHTML = "";
+      camere.forEach(function (c) {
+        var riga = document.createElement("div");
+        riga.className = "riga-camera";
+        riga.innerHTML =
           '<div class="thumb"' + (c.foto ? ' style="background-image:url(\'' + AM.urlFoto(db, c.foto) + '\')"' : "") + "></div>" +
-          '<div><b>' + AM.testoSicuro(c.nome) + "</b><br>" +
+          '<div><b>' + AM.testoSicuro(c.nome) + '</b><span class="spunta">✓ selezionata</span><br>' +
           '<span class="etichetta ' + (c.bagno === "privato" ? "" : "grigia") + '">bagno ' + c.bagno + "</span></div>" +
-          '<div class="prezzo-camera">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small></div>" +
-          "</div>";
-      }).join("");
+          '<div class="prezzo-camera">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small></div>";
+        riga.addEventListener("click", function () {
+          cameraScelta = c;
+          document.querySelectorAll(".riga-camera").forEach(function (r) { r.classList.remove("scelta"); });
+          riga.classList.add("scelta");
+          aggiornaPrezzo();
+          el("zonaPrenota").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+        el("listaCamere").appendChild(riga);
+      });
     }
+    aggiornaPrezzo();
 
     // Galleria
     var foto = (a.foto_annunci || []).sort(function (x, y) { return x.posizione - y.posizione; });
@@ -207,87 +289,83 @@
     el("dettagliCosti").innerHTML = costi;
 
     if (a.stato !== "pubblicato") {
-      el("zonaRichiesta").innerHTML = '<div class="avviso info">Questo annuncio non e\' pubblicato: lo vedi perche\' sei il proprietario o un amministratore.</div>';
+      el("zonaPrenota").innerHTML = '<div class="avviso info">Questo annuncio non e\' pubblicato: lo vedi perche\' sei il proprietario o un amministratore.</div>';
       return;
     }
-    preparaRichiesta(db, a);
+    preparaPrenota(db, a, camere);
   }
 
-  function preparaRichiesta(db, a) {
-    var zona = el("zonaRichiesta");
-    if (!db) {
-      zona.innerHTML = '<div class="avviso info">Il sito e\' in anteprima: a breve da qui potrai inviare la richiesta di prenotazione. Nel frattempo scrivici: <a href="mailto:galloecosrl@gmail.com">galloecosrl@gmail.com</a></div>';
-      return;
-    }
-    db.auth.getSession().then(function (r) {
-      var sessione = r.data.session;
-      if (!sessione) {
-        zona.innerHTML =
-          '<p style="font-size:0.92rem;color:var(--testo-tenue);margin-bottom:12px">Per inviare una richiesta di prenotazione serve un account gratuito.</p>' +
-          '<a class="bottone azzurro" style="width:100%;text-align:center" href="area-riservata.html?dopo=' +
-          encodeURIComponent("annuncio.html?id=" + a.id) + '">Accedi o registrati</a>';
+  // "Cosa include" nel pannello: spese, bagno della camera scelta, servizi.
+  function aggiornaInclude(a, camere) {
+    var voci = [];
+    if (a.spese_incluse) voci.push("Spese incluse nel prezzo");
+    if (cameraScelta) voci.push("Bagno " + cameraScelta.bagno);
+    if (a.arredato) voci.push("Arredato");
+    (a.servizi || []).forEach(function (s) { voci.push(s.charAt(0).toUpperCase() + s.slice(1)); });
+    el("pnInclude").innerHTML = voci.map(function (v) { return "<li>" + AM.testoSicuro(v) + "</li>"; }).join("");
+  }
+
+  function preparaPrenota(db, a, camere) {
+    var zona = el("zonaPrenota");
+    zona.innerHTML =
+      '<form id="formPrenota">' +
+      '<label for="prDal">Ingresso da</label><input id="prDal" type="date" required>' +
+      '<label for="prMesi">Per quanti mesi</label><input id="prMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
+      '<label for="prMessaggio">Un messaggio per il proprietario (facoltativo)</label>' +
+      '<textarea id="prMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
+      '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">Prenota subito</button>' +
+      '</form><div id="esitoPrenota"></div>';
+    var form = document.getElementById("formPrenota");
+    var esito = function (html) { document.getElementById("esitoPrenota").innerHTML = html; };
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (camere.length && !cameraScelta) {
+        esito('<div class="avviso info">Scegli prima una camera dall\'elenco qui a sinistra.</div>');
         return;
       }
-      if (sessione.user.id === a.proprietario) {
-        zona.innerHTML = '<div class="avviso info">Questo e\' un tuo annuncio: gestiscilo dall\'<a href="area-riservata.html">area riservata</a>.</div>';
+      if (!db) {
+        esito('<div class="avviso info">Il sito e\' in anteprima: a breve la prenotazione si completera\' da qui. Nel frattempo scrivici: <a href="mailto:galloecosrl@gmail.com">galloecosrl@gmail.com</a></div>');
         return;
       }
-      // Prenotazione immediata: la richiesta nasce gia' accettata e i
-      // contatti del proprietario si mostrano subito, stile booking.
-      var immediata = !!a.prenotazione_immediata;
-      var camere = (a.camere_annuncio || []).slice().sort(function (x, y) { return x.posizione - y.posizione; });
-      var campoCamera = camere.length
-        ? '<label for="riCamera">Quale camera</label><select id="riCamera" required>' +
-          camere.map(function (c) {
-            return '<option value="' + c.id + '">' + AM.testoSicuro(c.nome) + " — " +
-              AM.euro(c.prezzo_mese) + "/mese, bagno " + c.bagno + "</option>";
-          }).join("") + "</select>"
-        : "";
-      zona.innerHTML =
-        '<h3 style="font-size:1rem;margin-bottom:4px">' + (immediata ? "Prenota subito" : "Richiedi la prenotazione") + '</h3>' +
-        (immediata ? '<p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:6px">Conferma immediata: appena prenoti ricevi i contatti del proprietario.</p>' : "") +
-        '<form id="formRichiesta">' +
-        campoCamera +
-        '<label for="riDal">Ingresso da</label><input id="riDal" type="date" required>' +
-        '<label for="riMesi">Per quanti mesi</label><input id="riMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
-        '<label for="riMessaggio">' + (immediata ? "Un messaggio per il proprietario (facoltativo)" : "Presentati al proprietario") + '</label>' +
-        '<textarea id="riMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
-        '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">' + (immediata ? "Prenota subito" : "Invia la richiesta") + '</button>' +
-        '</form><div id="esitoRichiesta"></div>';
-      document.getElementById("formRichiesta").addEventListener("submit", function (ev) {
-        ev.preventDefault();
-        var bottone = ev.target.querySelector("button");
-        bottone.disabled = true;
+      var bottone = form.querySelector("button");
+      bottone.disabled = true;
+      db.auth.getSession().then(function (r) {
+        var sessione = r.data.session;
+        if (!sessione) {
+          location.href = "area-riservata.html?dopo=" + encodeURIComponent("annuncio.html?id=" + a.id);
+          return;
+        }
+        if (sessione.user.id === a.proprietario) {
+          bottone.disabled = false;
+          esito('<div class="avviso info">Questo e\' un tuo annuncio: gestiscilo dall\'<a href="area-riservata.html">area riservata</a>.</div>');
+          return;
+        }
+        // La prenotazione e' diretta: nasce gia' confermata e apre i contatti.
         db.from("richieste").insert({
           annuncio_id: a.id,
-          camera_id: camere.length ? parseInt(document.getElementById("riCamera").value, 10) : null,
+          camera_id: cameraScelta ? cameraScelta.id : null,
           inquilino: sessione.user.id,
-          dal: document.getElementById("riDal").value,
-          mesi: parseInt(document.getElementById("riMesi").value, 10),
-          messaggio: document.getElementById("riMessaggio").value.trim() || null,
-          stato: immediata ? "accettata" : "inviata"
-        }).then(function (r) {
-          if (r.error) {
+          dal: document.getElementById("prDal").value,
+          mesi: parseInt(document.getElementById("prMesi").value, 10),
+          messaggio: document.getElementById("prMessaggio").value.trim() || null,
+          stato: "accettata"
+        }).then(function (r2) {
+          if (r2.error) {
             bottone.disabled = false;
-            var msg = /sovrapposizioni|exclusion/i.test(r.error.message)
+            var msg = /sovrapposizioni|exclusion/i.test(r2.error.message)
               ? "Il periodo scelto non e' disponibile: e' gia' prenotato. Prova con altre date."
-              : "Invio non riuscito: " + r.error.message;
-            document.getElementById("esitoRichiesta").innerHTML =
-              '<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>";
+              : "Prenotazione non riuscita: " + r2.error.message;
+            esito('<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>");
             return;
           }
-          if (!immediata) {
-            zona.innerHTML = '<div class="avviso ok">Richiesta inviata! Il proprietario la vedra\' nella sua area riservata. Segui l\'esito nella <a href="area-riservata.html">tua area riservata</a>.</div>';
-            return;
-          }
-          // Prenotazione confermata: si mostrano subito i contatti.
           db.from("profili").select("nome, email, telefono").eq("id", a.proprietario).single()
             .then(function (rp) {
               var p = rp.data || {};
-              zona.innerHTML = '<div class="avviso ok">Prenotazione confermata! 🎉<br>Contatta il proprietario per organizzare l\'ingresso:<br><b>' +
+              zona.innerHTML = '<div class="avviso ok">Prenotazione confermata! 🎉<br>Contatta il proprietario per organizzare ingresso e contratto:<br><b>' +
                 AM.testoSicuro(p.nome || "") + "</b><br>" + AM.testoSicuro(p.email || "") +
                 (p.telefono ? "<br>" + AM.testoSicuro(p.telefono) : "") +
-                '<br><br>Trovi tutto anche nella <a href="area-riservata.html">tua area riservata</a>.</div>';
+                '<br><br>Per il contratto: <a href="contratti.html">guida e fac-simile</a>. Trovi tutto anche nella <a href="area-riservata.html">tua area riservata</a>.</div>';
             });
         });
       });

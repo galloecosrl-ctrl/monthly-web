@@ -53,9 +53,6 @@ create table public.annunci (
   minimo_mesi     integer not null default 1,
   disponibile_dal date,
   stato           text not null default 'bozza' check (stato in ('bozza','pubblicato','sospeso')),
-  -- true = prenotazione immediata stile booking: la richiesta nasce gia'
-  -- accettata e i contatti si scambiano subito, senza attesa del proprietario.
-  prenotazione_immediata boolean not null default false,
   creato_il       timestamptz not null default now(),
   aggiornato_il   timestamptz not null default now()
 );
@@ -283,19 +280,19 @@ create policy "camere: gestione del proprietario"
     where a.id = annuncio_id and (a.proprietario = auth.uid() or public.sono_admin())
   ));
 
--- richieste: l'inquilino crea richieste a proprio nome su annunci pubblicati
--- (non sui propri annunci). Nascono 'inviata'; possono nascere direttamente
--- 'accettata' SOLO se l'annuncio ha la prenotazione immediata.
-create policy "richieste: invio dell'inquilino"
+-- richieste: la prenotazione e' DIRETTA stile booking — l'inquilino prenota
+-- a proprio nome su annunci pubblicati (non sui propri) e la prenotazione
+-- nasce gia' 'accettata'. La disponibilita' la garantisce il vincolo di
+-- non sovrapposizione qui sopra.
+create policy "richieste: prenotazione diretta dell'inquilino"
   on public.richieste for insert
   to authenticated
   with check (
     inquilino = auth.uid()
+    and richieste.stato = 'accettata'
     and exists (
       select 1 from public.annunci a
       where a.id = annuncio_id and a.stato = 'pubblicato' and a.proprietario <> auth.uid()
-        and (richieste.stato = 'inviata'
-             or (richieste.stato = 'accettata' and a.prenotazione_immediata))
     )
     -- La camera indicata, se c'e', deve appartenere all'annuncio.
     and (camera_id is null or exists (
