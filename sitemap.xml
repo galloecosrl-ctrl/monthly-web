@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- NOTA: sostituire www.monthly.it con il dominio definitivo prima del lancio. -->
+<!-- NOTA: sostituire www.monthly.house con il dominio definitivo prima del lancio. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.monthly.it/</loc></url>
-  <url><loc>https://www.monthly.it/privacy.html</loc></url>
+  <url><loc>https://www.monthly.house/</loc></url>
+  <url><loc>https://www.monthly.house/privacy.html</loc></url>
 </urlset>

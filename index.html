@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly - Affitti mensili per studenti e professionisti</title>
   <meta name="description" content="Trova camere, monolocali, appartamenti e case in affitto mensile. Per studenti, professionisti e lavoratori in trasferta. Pubblica gratis il tuo annuncio.">
-  <link rel="stylesheet" href="stile.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="stile.css">
   <style>
     /* Hero con ricerca */
     .eroe {
-      background: linear-gradient(135deg, var(--verde-scuro) 0%, var(--verde) 60%, #14b8a6 100%);
+      background: linear-gradient(135deg, var(--blu-scuro) 0%, var(--blu) 60%, var(--azzurro) 100%);
       color: #fff; padding: 64px 20px 84px; text-align: center;
     }
     .eroe h1 { font-size: 2.3rem; letter-spacing: -0.02em; margin-bottom: 10px; }
@@ -29,14 +29,14 @@
     .passo { text-align: left; }
     .passo .numero {
       width: 38px; height: 38px; border-radius: 999px; margin-bottom: 10px;
-      background: var(--verde-chiarissimo); color: var(--verde-scuro);
+      background: var(--azzurro-chiaro); color: var(--blu-scuro);
       display: flex; align-items: center; justify-content: center; font-weight: 800;
     }
     .passo h3 { font-size: 1.02rem; margin-bottom: 4px; }
     .passo p { color: var(--testo-tenue); font-size: 0.92rem; }
     .fascia-proprietari {
-      margin-top: 54px; background: var(--verde-chiarissimo);
-      border: 1px solid #99f6e4; border-radius: 14px;
+      margin-top: 54px; background: var(--azzurro-chiaro);
+      border: 1px solid #bfdbfe; border-radius: 14px;
       padding: 32px 28px; text-align: center;
     }
     .fascia-proprietari h2 { font-size: 1.4rem; margin-bottom: 8px; }
@@ -85,7 +85,7 @@
       <option value="2000">Fino a 2.000 €</option>
     </select>
   </div>
-  <button class="bottone ambra" type="submit">Cerca</button>
+  <button class="bottone azzurro" type="submit">Cerca</button>
 </form>
 
 <main class="contenitore">
@@ -133,6 +133,7 @@
 </footer>
 
 <script src="app.js"></script>
+<script src="vetrina.js"></script>
 <script>
 (function () {
   "use strict";
@@ -142,6 +143,24 @@
 
   function mostraErrore(msg) {
     esito.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>";
+  }
+
+  // Il database non risponde (tipicamente: sito in anteprima locale, Supabase
+  // non ancora configurato): si mostrano gli annunci vetrina di vetrina.js.
+  function mostraVetrina(filtri) {
+    var dati = (window.AM_VETRINA || []).filter(function (a) {
+      if (a.stato !== "pubblicato") return false;
+      if (filtri.citta && a.citta.toLowerCase().indexOf(filtri.citta.toLowerCase()) === -1) return false;
+      if (filtri.tipologia && a.tipologia !== filtri.tipologia) return false;
+      if (filtri.budget && a.prezzo_mese > Number(filtri.budget)) return false;
+      return true;
+    });
+    esito.innerHTML = "";
+    if (!dati.length) {
+      esito.innerHTML = '<div class="avviso info">Nessun annuncio trovato con questi criteri: prova ad allargare la ricerca.</div>';
+      return;
+    }
+    griglia.innerHTML = dati.map(function (a) { return AM.cartaAnnuncio(null, a); }).join("");
   }
 
   function cerca(filtri) {
@@ -167,6 +186,7 @@
         griglia.innerHTML = r.data.map(function (a) { return AM.cartaAnnuncio(db, a); }).join("");
       });
     }).catch(function (e) {
+      if (window.AM_VETRINA && window.AM_VETRINA.length) { mostraVetrina(filtri); return; }
       mostraErrore("Non riusciamo a caricare gli annunci in questo momento. " + (e.message || ""));
     });
   }

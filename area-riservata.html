@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Area riservata - Monthly</title>
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="stile.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="stile.css">
   <style>
     .blocco-accesso { max-width: 430px; margin: 48px auto; }
     .linguette { display: flex; gap: 0; border-bottom: 1px solid var(--bordo); margin-bottom: 18px; }
@@ -14,7 +14,7 @@
       padding: 10px; font-size: 0.95rem; font-weight: 600; color: var(--testo-tenue);
       border-bottom: 2.5px solid transparent;
     }
-    .linguette button.attiva { color: var(--verde-scuro); border-bottom-color: var(--verde); }
+    .linguette button.attiva { color: var(--blu-scuro); border-bottom-color: var(--blu); }
     .separatore { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--testo-tenue); font-size: 0.85rem; }
     .separatore::before, .separatore::after { content: ""; flex: 1; border-top: 1px solid var(--bordo); }
     .cruscotto { margin-top: 28px; display: grid; gap: 24px; }
@@ -35,7 +35,7 @@
       border-radius: 999px; border: none; background: var(--rosso); color: #fff;
       font-size: 11px; line-height: 1; cursor: pointer;
     }
-    .contatti { background: var(--verde-chiarissimo); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
+    .contatti { background: var(--azzurro-chiaro); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
     dialog {
       border: none; border-radius: 14px; padding: 26px;
       max-width: 640px; width: calc(100vw - 40px);
@@ -104,7 +104,7 @@
     <div class="scheda">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <h2 style="margin-bottom:0">I tuoi annunci</h2>
-        <button class="bottone ambra piccolo" id="nuovoAnnuncio" type="button">+ Nuovo annuncio</button>
+        <button class="bottone azzurro piccolo" id="nuovoAnnuncio" type="button">+ Nuovo annuncio</button>
       </div>
       <div id="listaAnnunciMiei" style="margin-top:12px"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
     </div>
@@ -396,7 +396,7 @@
             '<button class="bottone secondario piccolo" data-modifica="' + a.id + '" type="button">Modifica</button>' +
             (a.stato === "pubblicato"
               ? '<button class="bottone piccolo" data-stato="sospeso" data-id="' + a.id + '" type="button">Sospendi</button>'
-              : '<button class="bottone ambra piccolo" data-stato="pubblicato" data-id="' + a.id + '" type="button">Pubblica</button>') +
+              : '<button class="bottone azzurro piccolo" data-stato="pubblicato" data-id="' + a.id + '" type="button">Pubblica</button>') +
             '<button class="bottone pericolo piccolo" data-elimina="' + a.id + '" type="button">Elimina</button>' +
             "</div></div>";
         }).join("");

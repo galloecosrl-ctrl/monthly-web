@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Annuncio - Monthly</title>
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="stile.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="stile.css">
   <style>
     .dettaglio { display: flex; gap: 28px; margin-top: 28px; align-items: flex-start; flex-wrap: wrap; }
     .colonna-principale { flex: 2; min-width: 300px; }
@@ -21,7 +21,7 @@
       background: var(--sfondo-tenue) center/cover no-repeat;
       border: 2px solid transparent;
     }
-    .galleria .mini.attiva { border-color: var(--verde); }
+    .galleria .mini.attiva { border-color: var(--blu); }
     .dettaglio h1 { font-size: 1.6rem; margin: 18px 0 4px; letter-spacing: -0.01em; }
     .luogo { color: var(--testo-tenue); margin-bottom: 14px; }
     .caratteristiche {
@@ -34,7 +34,7 @@
     .caratteristiche b { display: block; font-size: 0.98rem; }
     .servizi { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
     .descrizione { white-space: pre-line; color: var(--testo); }
-    .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--verde-scuro); }
+    .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--blu-scuro); }
     .prezzo-grande small { font-size: 0.95rem; font-weight: 400; color: var(--testo-tenue); }
     .voce-costo { display: flex; justify-content: space-between; font-size: 0.92rem; margin-top: 6px; color: var(--testo-tenue); }
   </style>
@@ -79,6 +79,7 @@
 </footer>
 
 <script src="app.js"></script>
+<script src="vetrina.js"></script>
 <script>
 (function () {
   "use strict";
@@ -94,6 +95,9 @@
   if (!idAnnuncio) { errore("Annuncio non indicato."); return; }
   stato.innerHTML = '<div class="avviso info" style="margin-top:24px">Caricamento dell\'annuncio…</div>';
 
+  // Annuncio vetrina corrispondente all'id (vedi vetrina.js), se esiste.
+  var vetrina = (window.AM_VETRINA || []).find(function (a) { return a.id === idAnnuncio; });
+
   AM.pronto().then(function (db) {
     return db.from("annunci")
       .select("*, foto_annunci(percorso, posizione)")
@@ -101,10 +105,15 @@
       .maybeSingle()
       .then(function (r) {
         if (r.error) throw r.error;
-        if (!r.data) { errore("Annuncio non trovato o non piu' disponibile."); return; }
+        if (!r.data) {
+          if (vetrina) { mostra(null, vetrina); return; }
+          errore("Annuncio non trovato o non piu' disponibile.");
+          return;
+        }
         mostra(db, r.data);
       });
   }).catch(function (e) {
+    if (vetrina) { mostra(null, vetrina); return; }
     errore("Non riusciamo a caricare l'annuncio. " + (e.message || ""));
   });
 
@@ -173,12 +182,16 @@
 
   function preparaRichiesta(db, a) {
     var zona = el("zonaRichiesta");
+    if (!db) {
+      zona.innerHTML = '<div class="avviso info">Il sito e\' in anteprima: a breve da qui potrai inviare la richiesta di prenotazione. Nel frattempo scrivici: <a href="mailto:galloecosrl@gmail.com">galloecosrl@gmail.com</a></div>';
+      return;
+    }
     db.auth.getSession().then(function (r) {
       var sessione = r.data.session;
       if (!sessione) {
         zona.innerHTML =
           '<p style="font-size:0.92rem;color:var(--testo-tenue);margin-bottom:12px">Per inviare una richiesta di prenotazione serve un account gratuito.</p>' +
-          '<a class="bottone ambra" style="width:100%;text-align:center" href="area-riservata.html?dopo=' +
+          '<a class="bottone azzurro" style="width:100%;text-align:center" href="area-riservata.html?dopo=' +
           encodeURIComponent("annuncio.html?id=" + a.id) + '">Accedi o registrati</a>';
         return;
       }
@@ -193,7 +206,7 @@
         '<label for="riMesi">Per quanti mesi</label><input id="riMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
         '<label for="riMessaggio">Presentati al proprietario</label>' +
         '<textarea id="riMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
-        '<button class="bottone ambra" type="submit" style="width:100%;margin-top:14px">Invia la richiesta</button>' +
+        '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">Invia la richiesta</button>' +
         '</form><div id="esitoRichiesta"></div>';
       document.getElementById("formRichiesta").addEventListener("submit", function (ev) {
         ev.preventDefault();

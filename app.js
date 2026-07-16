@@ -65,8 +65,11 @@
     return d.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
   }
 
-  // URL pubblico di una foto nel bucket Storage.
+  // URL pubblico di una foto. I percorsi che iniziano con "/" (o con http)
+  // sono file serviti dal sito stesso (es. le foto vetrina in /foto/...);
+  // gli altri vivono nel bucket Storage di Supabase.
   function urlFoto(client, percorso) {
+    if (/^(\/|https?:)/.test(percorso)) return percorso;
     return client.storage.from("foto-annunci").getPublicUrl(percorso).data.publicUrl;
   }
 

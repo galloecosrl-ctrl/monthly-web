@@ -19,7 +19,9 @@ Netlify, repo GitHub separato.
 | `annuncio.html` | Dettaglio annuncio: galleria foto, caratteristiche, richiesta di prenotazione |
 | `area-riservata.html` | Login/registrazione, profilo, richieste inviate, gestione annunci e foto, richieste ricevute, pannello admin |
 | `privacy.html` | Informativa privacy (titolare Gallo & Co. srl) |
-| `stile.css`, `app.js` | Stile e utilita' condivisi da tutte le pagine |
+| `stile.css`, `app.js` | Stile e utilita' condivisi da tutte le pagine (palette dal logo: navy #1b2f5e + azzurro #3d9bf5) |
+| `vetrina.js` | Annunci vetrina Gallo & Co. mostrati quando il database non e' attivo (prezzi SEGNAPOSTO) |
+| `foto/` | Foto delle proprieta' vetrina, servite dal sito stesso |
 | `netlify/functions/getSupabaseConfig.js` | Consegna al browser URL e chiave pubblica Supabase (dalle env Netlify) |
 | `supabase/schema.sql` | Tabelle, policy RLS, trigger e bucket Storage: da eseguire una volta nel SQL Editor |
 | `supabase/seed-gallo.sql` | Bozze degli annunci Villino Elda e Berardi (prezzi segnaposto da correggere) |
