@@ -6,6 +6,7 @@
   <title>Monthly - Affitti mensili per studenti e professionisti</title>
   <meta name="description" content="Trova camere, monolocali, appartamenti e case in affitto mensile. Per studenti, professionisti e lavoratori in trasferta. Pubblica gratis il tuo annuncio.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="stile.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     /* Hero con ricerca */
     .eroe {
@@ -69,9 +70,7 @@
     <select id="ricTipologia">
       <option value="">Tutte</option>
       <option value="camera">Camera</option>
-      <option value="monolocale">Monolocale</option>
       <option value="appartamento">Appartamento</option>
-      <option value="casa">Casa intera</option>
     </select>
   </div>
   <div>
@@ -86,7 +85,15 @@
     </select>
   </div>
   <button class="bottone azzurro" type="submit">Cerca</button>
+  <button class="bottone secondario" type="button" id="bottoneMappa" title="Vedi i risultati sulla mappa">🗺️ Mappa</button>
 </form>
+
+<div class="contenitore" id="sezioneMappa" style="display:none;margin-top:22px">
+  <div id="mappaRicerca" style="height:420px;border-radius:14px;border:1px solid var(--bordo)"></div>
+  <p style="font-size:0.83rem;color:var(--testo-tenue);margin-top:6px">
+    La mappa mostra gli annunci che rispondono ai filtri di ricerca qui sopra: cambiando i filtri si aggiorna.
+  </p>
+</div>
 
 <main class="contenitore">
   <section class="sezione">
@@ -142,6 +149,7 @@
   var griglia = document.getElementById("grigliaAnnunci");
   var esito = document.getElementById("esitoRicerca");
   var titolo = document.getElementById("titoloRisultati");
+  var ultimiRisultati = [];   // annunci correnti, condivisi tra griglia e mappa
 
   function mostraErrore(msg) {
     esito.innerHTML = '<div class="avviso errore">' + AM.testoSicuro(msg) + "</div>";
@@ -158,6 +166,8 @@
       return true;
     });
     esito.innerHTML = "";
+    ultimiRisultati = dati;
+    aggiornaMappa();
     if (!dati.length) {
       esito.innerHTML = '<div class="avviso info">Nessun annuncio trovato con questi criteri: prova ad allargare la ricerca.</div>';
       return;
@@ -170,7 +180,7 @@
     griglia.innerHTML = "";
     AM.pronto().then(function (db) {
       var q = db.from("annunci")
-        .select("id, titolo, tipologia, citta, zona, prezzo_mese, spese_incluse, foto_annunci(percorso, posizione), camere_annuncio(prezzo_mese)")
+        .select("id, titolo, tipologia, citta, zona, indirizzo, prezzo_mese, spese_incluse, foto_annunci(percorso, posizione), camere_annuncio(prezzo_mese)")
         .eq("stato", "pubblicato")
         .order("creato_il", { ascending: false })
         .limit(24);
@@ -180,6 +190,8 @@
       return q.then(function (r) {
         if (r.error) throw r.error;
         esito.innerHTML = "";
+        ultimiRisultati = r.data;
+        aggiornaMappa();
         if (!r.data.length) {
           esito.innerHTML = '<div class="avviso info">Nessun annuncio trovato' +
             (filtri.attiva ? " con questi criteri: prova ad allargare la ricerca." : " al momento: torna a trovarci presto!") + "</div>";
@@ -194,6 +206,90 @@
   }
 
   AM.autocompletaCitta(document.getElementById("ricCitta"));
+
+  // ─── Ricerca sulla mappa: coesiste con i filtri, che continuano a valere ──
+  var mappa = null;
+  var gruppoMarcatori = null;
+  var cacheGeo = {};
+
+  document.getElementById("bottoneMappa").addEventListener("click", function () {
+    var sez = document.getElementById("sezioneMappa");
+    var apri = sez.style.display === "none";
+    sez.style.display = apri ? "block" : "none";
+    this.classList.toggle("azzurro", apri);
+    this.classList.toggle("secondario", !apri);
+    if (apri) preparaMappa();
+  });
+
+  function caricaLeaflet() {
+    return new Promise(function (res, rej) {
+      if (window.L) { res(); return; }
+      var s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.onload = res;
+      s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Coordinate di un annuncio via Photon/OpenStreetMap, con cache in pagina.
+  function geocodifica(a) {
+    var query = a.indirizzo
+      ? a.indirizzo + ", " + a.citta
+      : a.citta + (a.zona ? ", " + a.zona : "");
+    if (cacheGeo[query]) return Promise.resolve(cacheGeo[query]);
+    return fetch("https://photon.komoot.io/api/?q=" + encodeURIComponent(query) + "&limit=1")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var f = d.features && d.features[0];
+        if (!f) return null;
+        var punto = { lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] };
+        cacheGeo[query] = punto;
+        return punto;
+      })
+      .catch(function () { return null; });
+  }
+
+  function preparaMappa() {
+    caricaLeaflet().then(function () {
+      if (!mappa) {
+        mappa = L.map("mappaRicerca").setView([41.9, 12.5], 6);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap"
+        }).addTo(mappa);
+        gruppoMarcatori = L.layerGroup().addTo(mappa);
+      }
+      aggiornaMappa();
+    }).catch(function () {
+      document.getElementById("mappaRicerca").innerHTML =
+        '<div class="avviso errore">Mappa non disponibile in questo momento.</div>';
+    });
+  }
+
+  function aggiornaMappa() {
+    if (!mappa || document.getElementById("sezioneMappa").style.display === "none") return;
+    setTimeout(function () { mappa.invalidateSize(); }, 100);
+    gruppoMarcatori.clearLayers();
+    var punti = [];
+    var attesi = ultimiRisultati.length;
+    if (!attesi) return;
+    ultimiRisultati.forEach(function (a) {
+      geocodifica(a).then(function (p) {
+        attesi--;
+        if (p) {
+          punti.push([p.lat, p.lng]);
+          var prezzo = AM.prezzoDa(a);
+          L.marker([p.lat, p.lng]).addTo(gruppoMarcatori)
+            .bindPopup("<b>" + AM.testoSicuro(a.titolo) + "</b><br>" +
+              (prezzo.da ? "da " : "") + AM.euro(prezzo.prezzo) + " / mese<br>" +
+              '<a href="annuncio.html?id=' + a.id + '">Vedi annuncio →</a>');
+        }
+        if (attesi === 0 && punti.length) {
+          mappa.fitBounds(punti, { padding: [40, 40], maxZoom: 15 });
+        }
+      });
+    });
+  }
 
   document.getElementById("formRicerca").addEventListener("submit", function (ev) {
     ev.preventDefault();

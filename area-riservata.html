@@ -39,6 +39,7 @@
     dialog {
       border: none; border-radius: 14px; padding: 26px;
       max-width: 760px; width: calc(100vw - 40px);
+      margin: auto; /* il reset globale azzera i margini: senza questo il pannello resta in alto a sinistra */
       box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     }
     dialog::backdrop { background: rgba(0,0,0,0.45); }
@@ -64,8 +65,25 @@
       border: none; cursor: pointer; font-size: 10px; font-weight: 700; padding: 3px 0;
       border-radius: 0 0 6px 6px;
     }
-    .miniature .mini:hover .fai-copertina { display: block; }
     .miniature .mini.in-coda { opacity: 0.55; }
+    .miniature .mini { cursor: grab; }
+    .miniature .mini.trascinata { opacity: 0.4; }
+    #aggiungiCamera {
+      display: block; width: 100%; margin: 6px 0 4px;
+      padding: 18px; font-size: 1rem; text-align: center;
+      border: 2px dashed var(--azzurro); background: var(--azzurro-chiaro);
+      color: var(--blu-scuro); border-radius: 12px;
+    }
+    #aggiungiCamera:hover { background: #dbeafe; }
+    .griglia-servizi {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 4px 10px; margin-top: 6px;
+    }
+    .griglia-servizi label {
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 400; font-size: 0.9rem; margin: 2px 0; cursor: pointer;
+    }
+    .griglia-servizi input { width: auto; accent-color: var(--azzurro); }
   </style>
 </head>
 <body>
@@ -163,9 +181,7 @@
           <label for="anTipologia">Tipologia *</label>
           <select id="anTipologia" required>
             <option value="camera">Camera</option>
-            <option value="monolocale">Monolocale</option>
             <option value="appartamento">Appartamento</option>
-            <option value="casa">Casa intera</option>
           </select>
         </div>
         <div><label for="anCitta">Città *</label><input id="anCitta" type="text" required></div>
@@ -200,22 +216,24 @@
         <div><label for="anSpeseMese">Spese al mese (€, se escluse)</label><input id="anSpeseMese" type="number" min="0" step="0.01"></div>
         <div><label for="anCauzione">Cauzione (€)</label><input id="anCauzione" type="number" min="0" step="0.01"></div>
       </div>
-      <label for="anServizi">Servizi (separati da virgola)</label>
-      <input id="anServizi" type="text" placeholder="wifi, lavatrice, aria condizionata, cucina attrezzata">
-      <div style="margin-top:14px">
-        <h3 class="sezione-editor">4 · Camere prenotabili separatamente (facoltativo)</h3>
+      <label style="margin-top:14px">Servizi (spunta quelli presenti)</label>
+      <div class="griglia-servizi" id="grigliaServizi"></div>
+      <label for="anServiziAltri" style="font-weight:400;font-size:0.83rem;color:var(--testo-tenue)">Altri servizi non in elenco (separati da virgola)</label>
+      <input id="anServiziAltri" type="text" placeholder="Es. giardino 600 mq, sauna">
+      <div style="margin-top:14px" id="zonaCamereEditor">
+        <h3 class="sezione-editor">4 · Le camere prenotabili</h3>
         <p style="font-size:0.83rem;color:var(--testo-tenue);margin:2px 0 8px">
-          Se l'alloggio si affitta per camera, aggiungile qui: ognuna avra' prezzo,
+          Aggiungi le camere che si prenotano separatamente: ognuna avra' prezzo,
           foto e disponibilita' propri e l'annuncio mostrera' "da &lt;prezzo minimo&gt; / mese".
         </p>
         <div id="listaCamereEditor"></div>
-        <button class="bottone secondario piccolo" type="button" id="aggiungiCamera">+ Aggiungi camera</button>
+        <button class="bottone secondario" type="button" id="aggiungiCamera">+ Aggiungi camera</button>
       </div>
       <div id="zonaFoto" style="display:none">
         <h3 class="sezione-editor">5 · Foto dell'alloggio</h3>
         <p style="font-size:0.83rem;color:var(--testo-tenue);margin:2px 0 8px">
-          La <b>copertina</b> e' la foto che il pubblico vede nella ricerca: passa il mouse
-          su una foto e scegli "Usa come copertina" per cambiarla. Con ✕ la elimini.
+          <b>Trascina le foto per riordinarle</b>: la prima e' la copertina che il pubblico
+          vede nella ricerca. Con ✕ le elimini. Vale anche per le foto delle camere.
         </p>
         <div class="miniature" id="miniatureFoto"></div>
         <button class="bottone secondario piccolo" type="button" id="aggiungiFotoAnnuncio" style="margin-top:8px">+ Aggiungi foto</button>
@@ -522,11 +540,12 @@
     el("anSpeseIncluse").value = a ? String(a.spese_incluse) : "true";
     el("anSpeseMese").value = a && a.spese_mese ? a.spese_mese : "";
     el("anCauzione").value = a && a.cauzione ? a.cauzione : "";
-    el("anServizi").value = a ? (a.servizi || []).join(", ") : "";
+    impostaServizi(a ? (a.servizi || []) : []);
     el("listaCamereEditor").innerHTML = "";
     ((a && a.camere_annuncio) || [])
       .slice().sort(function (x, y) { return x.posizione - y.posizione; })
       .forEach(aggiungiRigaCamera);
+    aggiornaZonaCamere();
     el("zonaFoto").style.display = a ? "block" : "none";
     el("anFoto").value = "";
     if (a) mostraMiniature(a.foto_annunci || []);
@@ -534,6 +553,61 @@
   }
 
   AM.autocompletaCitta(el("anCitta"));
+
+  // ─── Servizi a spunta ─────────────────────────────────────────────────────
+  var SERVIZI_LISTA = [
+    "wifi", "aria condizionata", "riscaldamento", "lavatrice", "asciugatrice",
+    "lavastoviglie", "cucina attrezzata", "cucina condivisa", "forno", "microonde",
+    "TV", "scrivania", "armadio", "cassaforte", "balcone", "terrazza", "giardino",
+    "salone comune", "ascensore", "parcheggio", "garage", "cantina",
+    "animali ammessi", "accessibile ai disabili", "pulizie incluse", "portineria"
+  ];
+
+  (function costruisciGrigliaServizi() {
+    var griglia = el("grigliaServizi");
+    SERVIZI_LISTA.forEach(function (s) {
+      var etichetta = document.createElement("label");
+      var spunta = document.createElement("input");
+      spunta.type = "checkbox";
+      spunta.value = s;
+      etichetta.appendChild(spunta);
+      etichetta.appendChild(document.createTextNode(s.charAt(0).toUpperCase() + s.slice(1)));
+      griglia.appendChild(etichetta);
+    });
+  })();
+
+  // Spunta i servizi noti; quelli fuori elenco finiscono nel campo "Altri".
+  function impostaServizi(servizi) {
+    var extra = [];
+    var noti = {};
+    servizi.forEach(function (s) {
+      if (SERVIZI_LISTA.indexOf(s) > -1) noti[s] = true;
+      else if (s) extra.push(s);
+    });
+    document.querySelectorAll("#grigliaServizi input").forEach(function (c) {
+      c.checked = !!noti[c.value];
+    });
+    el("anServiziAltri").value = extra.join(", ");
+  }
+
+  function leggiServizi() {
+    var scelti = Array.prototype.map.call(
+      document.querySelectorAll("#grigliaServizi input:checked"),
+      function (c) { return c.value; }
+    );
+    el("anServiziAltri").value.split(",").forEach(function (s) {
+      s = s.trim();
+      if (s && scelti.indexOf(s) === -1) scelti.push(s);
+    });
+    return scelti;
+  }
+
+  // La sezione camere esiste solo per la tipologia "camera": un appartamento
+  // si affitta per intero.
+  function aggiornaZonaCamere() {
+    el("zonaCamereEditor").style.display = el("anTipologia").value === "camera" ? "block" : "none";
+  }
+  el("anTipologia").addEventListener("change", aggiornaZonaCamere);
 
   // ─── Camere prenotabili separatamente (righe dinamiche nell'editor) ──────
   el("aggiungiCamera").addEventListener("click", function () { aggiungiRigaCamera(null); });
@@ -603,10 +677,13 @@
     el("listaCamereEditor").appendChild(riga);
   }
 
-  // Miniatura di una foto camera gia' sul server, con eliminazione.
+  // Miniatura di una foto camera gia' sul server: eliminabile e trascinabile.
   function aggiungiMiniCamera(riga, f) {
+    var lista = riga.querySelector(".camFotoLista");
+    abilitaOrdinamento(lista, function () { salvaOrdineMiniature(lista, 50); });
     var div = document.createElement("div");
     div.className = "mini";
+    div.dataset.fotoId = f.id;
     div.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
     var x = document.createElement("button");
     x.type = "button"; x.textContent = "✕"; x.title = "Elimina foto";
@@ -616,11 +693,14 @@
       }).then(function () { div.remove(); });
     });
     div.appendChild(x);
-    riga.querySelector(".camFotoLista").appendChild(div);
+    rendiTrascinabile(div, lista);
+    lista.appendChild(div);
   }
 
   // Legge le righe camera compilate; le righe senza nome o prezzo si ignorano.
+  // Con tipologia "appartamento" la sezione e' nascosta: nessuna camera.
   function leggiCamereEditor() {
+    if (el("zonaCamereEditor").style.display === "none") return [];
     return Array.prototype.map.call(
       document.querySelectorAll("#listaCamereEditor .riga-camera-editor"),
       function (riga, i) {
@@ -711,34 +791,80 @@
     });
   }
 
+  // ─── Riordino foto col trascinamento ──────────────────────────────────────
+  // Le miniature si trascinano per riordinarle; a fine trascinamento l'ordine
+  // visivo viene salvato. La prima foto generale e' la copertina.
+  function elementoDopo(cont, x, y) {
+    var candidati = Array.prototype.slice.call(cont.querySelectorAll(".mini:not(.trascinata)"));
+    for (var i = 0; i < candidati.length; i++) {
+      var r = candidati[i].getBoundingClientRect();
+      if (y < r.top + r.height / 2 || (y < r.bottom && x < r.left + r.width / 2)) return candidati[i];
+    }
+    return null;
+  }
+
+  function abilitaOrdinamento(cont, salvaOrdine) {
+    cont._salvaOrdine = salvaOrdine;
+    if (cont._dndAttivo) return;
+    cont._dndAttivo = true;
+    cont.addEventListener("dragover", function (ev) {
+      ev.preventDefault();
+      var trascinata = cont.querySelector(".mini.trascinata");
+      if (!trascinata) return;
+      var dopo = elementoDopo(cont, ev.clientX, ev.clientY);
+      if (dopo) cont.insertBefore(trascinata, dopo);
+      else cont.appendChild(trascinata);
+    });
+  }
+
+  function rendiTrascinabile(mini, cont) {
+    mini.draggable = true;
+    mini.title = "Trascina per riordinare";
+    mini.addEventListener("dragstart", function (ev) {
+      ev.dataTransfer.setData("text/plain", "");
+      mini.classList.add("trascinata");
+    });
+    mini.addEventListener("dragend", function () {
+      mini.classList.remove("trascinata");
+      if (cont._salvaOrdine) cont._salvaOrdine();
+    });
+  }
+
+  // Salva l'ordine visivo di un contenitore di miniature; "base" distanzia le
+  // foto delle camere (50+) da quelle generali (0+), la cui prima e' la copertina.
+  function salvaOrdineMiniature(cont, base) {
+    var ids = Array.prototype.map.call(
+      cont.querySelectorAll(".mini[data-foto-id]"),
+      function (m) { return parseInt(m.dataset.fotoId, 10); }
+    );
+    var catena = Promise.resolve();
+    ids.forEach(function (id, i) {
+      catena = catena.then(function () {
+        return db.from("foto_annunci").update({ posizione: base + i }).eq("id", id);
+      });
+    });
+    return catena.then(ricaricaFotoEditor);
+  }
+
   // Miniature delle foto GENERALI dell'annuncio (quelle delle camere vivono
-  // nelle rispettive righe). La prima e' la copertina mostrata in ricerca;
-  // le altre hanno il bottone "Usa come copertina".
+  // nelle rispettive righe). La prima e' la copertina mostrata in ricerca.
   function mostraMiniature(foto) {
     var cont = el("miniatureFoto");
     cont.innerHTML = "";
+    abilitaOrdinamento(cont, function () { salvaOrdineMiniature(cont, 0); });
     var generali = (foto || [])
       .filter(function (f) { return !f.camera_id; })
       .sort(function (a, b) { return a.posizione - b.posizione; });
     generali.forEach(function (f, i) {
       var div = document.createElement("div");
       div.className = "mini";
+      div.dataset.fotoId = f.id;
       div.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
       if (i === 0) {
         var badge = document.createElement("span");
         badge.className = "badge-copertina";
         badge.textContent = "Copertina";
         div.appendChild(badge);
-      } else {
-        var scegli = document.createElement("button");
-        scegli.type = "button";
-        scegli.className = "fai-copertina";
-        scegli.textContent = "Usa come copertina";
-        scegli.addEventListener("click", function () {
-          db.from("foto_annunci").update({ posizione: generali[0].posizione - 1 })
-            .eq("id", f.id).then(ricaricaFotoEditor);
-        });
-        div.appendChild(scegli);
       }
       var x = document.createElement("button");
       x.type = "button"; x.textContent = "✕"; x.title = "Elimina foto";
@@ -748,6 +874,7 @@
         }).then(ricaricaFotoEditor);
       });
       div.appendChild(x);
+      rendiTrascinabile(div, cont);
       cont.appendChild(div);
     });
   }
@@ -799,7 +926,7 @@
       spese_incluse: el("anSpeseIncluse").value === "true",
       spese_mese: valNum("anSpeseMese", false),
       cauzione: valNum("anCauzione", false),
-      servizi: el("anServizi").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+      servizi: leggiServizi()
     };
 
     var salvataggio;
