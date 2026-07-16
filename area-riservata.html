@@ -38,10 +38,34 @@
     .contatti { background: var(--azzurro-chiaro); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
     dialog {
       border: none; border-radius: 14px; padding: 26px;
-      max-width: 640px; width: calc(100vw - 40px);
+      max-width: 760px; width: calc(100vw - 40px);
       box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     }
     dialog::backdrop { background: rgba(0,0,0,0.45); }
+    .sezione-editor {
+      font-size: 0.95rem; color: var(--blu-scuro);
+      border-bottom: 1px solid var(--bordo);
+      padding-bottom: 4px; margin: 20px 0 4px;
+    }
+    .riga-camera-editor {
+      border: 1px solid var(--bordo); border-radius: 10px;
+      padding: 10px 14px 12px; margin-bottom: 10px; background: var(--sfondo-tenue);
+    }
+    .miniature .mini { width: 104px; height: 74px; }
+    .miniature .mini .badge-copertina {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: rgba(27,47,94,0.85); color: #fff;
+      font-size: 10px; text-align: center; padding: 2px 0;
+      border-radius: 0 0 6px 6px;
+    }
+    .miniature .mini .fai-copertina {
+      position: absolute; left: 0; right: 0; bottom: 0; display: none;
+      background: rgba(255,255,255,0.95); color: var(--blu);
+      border: none; cursor: pointer; font-size: 10px; font-weight: 700; padding: 3px 0;
+      border-radius: 0 0 6px 6px;
+    }
+    .miniature .mini:hover .fai-copertina { display: block; }
+    .miniature .mini.in-coda { opacity: 0.55; }
   </style>
 </head>
 <body>
@@ -131,6 +155,7 @@
   <dialog id="editorAnnuncio">
     <h2 style="font-size:1.2rem;margin-bottom:6px" id="editorTitolo">Nuovo annuncio</h2>
     <form id="formAnnuncio">
+      <h3 class="sezione-editor">1 · L'alloggio</h3>
       <label for="anTitolo">Titolo dell'annuncio *</label>
       <input id="anTitolo" type="text" required maxlength="120" placeholder="Es. Camera luminosa vicino all'universita'">
       <div class="campi-riga">
@@ -150,6 +175,7 @@
       <input id="anIndirizzo" type="text" placeholder="Es. Via Auconi 22, Roma">
       <label for="anDescrizione">Descrizione</label>
       <textarea id="anDescrizione" placeholder="Racconta l'alloggio, la zona, a chi e' adatto…"></textarea>
+      <h3 class="sezione-editor">2 · Spazi e dotazioni</h3>
       <div class="campi-riga">
         <div><label for="anMq">Superficie (m²)</label><input id="anMq" type="number" min="1"></div>
         <div><label for="anCamere">Camere</label><input id="anCamere" type="number" min="0"></div>
@@ -164,6 +190,7 @@
         <div><label for="anDisponibileDal">Disponibile dal</label><input id="anDisponibileDal" type="date"></div>
         <div><label for="anMinimoMesi">Periodo minimo (mesi) *</label><input id="anMinimoMesi" type="number" min="1" value="1" required></div>
       </div>
+      <h3 class="sezione-editor">3 · Prezzo e condizioni</h3>
       <div class="campi-riga">
         <div><label for="anPrezzo">Prezzo al mese (€) *</label><input id="anPrezzo" type="number" min="1" step="0.01" required></div>
         <div>
@@ -176,18 +203,23 @@
       <label for="anServizi">Servizi (separati da virgola)</label>
       <input id="anServizi" type="text" placeholder="wifi, lavatrice, aria condizionata, cucina attrezzata">
       <div style="margin-top:14px">
-        <label style="margin-bottom:0">Camere prenotabili separatamente (facoltativo)</label>
+        <h3 class="sezione-editor">4 · Camere prenotabili separatamente (facoltativo)</h3>
         <p style="font-size:0.83rem;color:var(--testo-tenue);margin:2px 0 8px">
-          Se l'alloggio si affitta per camera, aggiungile qui: ognuna avra' prezzo e
-          disponibilita' propri e l'annuncio mostrera' "da &lt;prezzo minimo&gt; / mese".
+          Se l'alloggio si affitta per camera, aggiungile qui: ognuna avra' prezzo,
+          foto e disponibilita' propri e l'annuncio mostrera' "da &lt;prezzo minimo&gt; / mese".
         </p>
         <div id="listaCamereEditor"></div>
         <button class="bottone secondario piccolo" type="button" id="aggiungiCamera">+ Aggiungi camera</button>
       </div>
       <div id="zonaFoto" style="display:none">
-        <label for="anFoto">Aggiungi foto (JPG/PNG, puoi selezionarne piu' di una)</label>
-        <input id="anFoto" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+        <h3 class="sezione-editor">5 · Foto dell'alloggio</h3>
+        <p style="font-size:0.83rem;color:var(--testo-tenue);margin:2px 0 8px">
+          La <b>copertina</b> e' la foto che il pubblico vede nella ricerca: passa il mouse
+          su una foto e scegli "Usa come copertina" per cambiarla. Con ✕ la elimini.
+        </p>
         <div class="miniature" id="miniatureFoto"></div>
+        <button class="bottone secondario piccolo" type="button" id="aggiungiFotoAnnuncio" style="margin-top:8px">+ Aggiungi foto</button>
+        <input id="anFoto" type="file" accept="image/jpeg,image/png,image/webp" multiple style="display:none">
       </div>
       <div id="esitoEditor"></div>
       <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
@@ -402,7 +434,7 @@
 
   function caricaAnnunciMiei() {
     db.from("annunci")
-      .select("*, foto_annunci(id, percorso, posizione), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
+      .select("*, foto_annunci(id, percorso, posizione, camera_id), camere_annuncio(id, nome, prezzo_mese, bagno, foto, posizione)")
       .eq("proprietario", utente.id)
       .order("creato_il", { ascending: false })
       .then(function (r) {
@@ -508,9 +540,9 @@
 
   function aggiungiRigaCamera(c) {
     var riga = document.createElement("div");
-    riga.className = "campi-riga riga-camera-editor";
-    riga.style.cssText = "align-items:flex-end;margin-bottom:8px";
+    riga.className = "riga-camera-editor";
     riga.innerHTML =
+      '<div class="campi-riga" style="align-items:flex-end">' +
       '<div style="flex:2"><label>Nome camera</label><input type="text" class="camNome" placeholder="Es. Camera gialla" value="' +
       (c ? AM.testoSicuro(c.nome) : "") + '"></div>' +
       '<div><label>Prezzo al mese (€)</label><input type="number" min="1" step="0.01" class="camPrezzo" value="' +
@@ -519,13 +551,72 @@
       '<option value="condiviso"' + (c && c.bagno === "condiviso" ? " selected" : "") + ">Condiviso</option>" +
       '<option value="privato"' + (c && c.bagno === "privato" ? " selected" : "") + ">Privato</option>" +
       "</select></div>" +
-      '<div style="flex:2"><label>Foto della camera (e del suo bagno)</label>' +
-      '<input type="file" class="camFoto" accept="image/jpeg,image/png,image/webp" multiple></div>' +
-      '<div style="flex:0"><button class="bottone pericolo piccolo" type="button">✕</button></div>';
+      '<div style="flex:0"><button class="bottone pericolo piccolo camRimuovi" type="button" title="Rimuovi camera">✕</button></div>' +
+      "</div>" +
+      '<div class="miniature camFotoLista" style="margin-top:8px"></div>' +
+      '<button class="bottone secondario piccolo camAggiungiFoto" type="button" style="margin-top:6px">📷 Aggiungi foto della camera</button>' +
+      '<input type="file" class="camFoto" accept="image/jpeg,image/png,image/webp" multiple style="display:none">';
     riga.dataset.id = (c && c.id) || "";
     riga.dataset.foto = (c && c.foto) || "";
-    riga.querySelector("button").addEventListener("click", function () { riga.remove(); });
+    riga._coda = []; // foto scelte prima del salvataggio della camera
+
+    riga.querySelector(".camRimuovi").addEventListener("click", function () { riga.remove(); });
+
+    // Foto gia' agganciate alla camera, con eliminazione al volo.
+    if (c && annuncioInModifica) {
+      (annuncioInModifica.foto_annunci || [])
+        .filter(function (f) { return f.camera_id === c.id; })
+        .forEach(function (f) { aggiungiMiniCamera(riga, f); });
+    }
+
+    // "Aggiungi foto": se la camera e' gia' salvata si caricano SUBITO;
+    // altrimenti restano in coda (anteprima sbiadita) e salgono col salvataggio.
+    var inputFile = riga.querySelector(".camFoto");
+    riga.querySelector(".camAggiungiFoto").addEventListener("click", function () { inputFile.click(); });
+    inputFile.addEventListener("change", function () {
+      var files = Array.prototype.slice.call(inputFile.files);
+      inputFile.value = "";
+      if (!files.length) return;
+      if (riga.dataset.id && annuncioInModifica && db && utente) {
+        riga.querySelector(".camAggiungiFoto").textContent = "Caricamento…";
+        caricaFotoCamera(annuncioInModifica.id, {
+          id: parseInt(riga.dataset.id, 10),
+          foto: riga.dataset.foto || null,
+          posizione: 50,
+          file: files,
+          riga: riga
+        }).then(function () {
+          riga.querySelector(".camAggiungiFoto").textContent = "📷 Aggiungi foto della camera";
+        });
+      } else {
+        files.forEach(function (f) {
+          riga._coda.push(f);
+          var mini = document.createElement("div");
+          mini.className = "mini in-coda";
+          mini.title = "Si carica al salvataggio dell'annuncio";
+          mini.style.backgroundImage = "url('" + URL.createObjectURL(f) + "')";
+          riga.querySelector(".camFotoLista").appendChild(mini);
+        });
+      }
+    });
+
     el("listaCamereEditor").appendChild(riga);
+  }
+
+  // Miniatura di una foto camera gia' sul server, con eliminazione.
+  function aggiungiMiniCamera(riga, f) {
+    var div = document.createElement("div");
+    div.className = "mini";
+    div.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
+    var x = document.createElement("button");
+    x.type = "button"; x.textContent = "✕"; x.title = "Elimina foto";
+    x.addEventListener("click", function () {
+      db.storage.from("foto-annunci").remove([f.percorso]).then(function () {
+        return db.from("foto_annunci").delete().eq("id", f.id);
+      }).then(function () { div.remove(); });
+    });
+    div.appendChild(x);
+    riga.querySelector(".camFotoLista").appendChild(div);
   }
 
   // Legge le righe camera compilate; le righe senza nome o prezzo si ignorano.
@@ -543,7 +634,7 @@
           bagno: riga.querySelector(".camBagno").value,
           foto: riga.dataset.foto || null,
           posizione: i,
-          file: riga.querySelector(".camFoto").files,
+          file: riga._coda || [],
           riga: riga
         };
       }
@@ -596,42 +687,86 @@
         return db.storage.from("foto-annunci").upload(percorso, f, { contentType: f.type })
           .then(function (r) {
             if (r.error) return r;
-            var dopo = [db.from("foto_annunci").insert({ annuncio_id: annuncioId, percorso: percorso, posizione: 50 + c.posizione * 10 + i, camera_id: c.id })];
-            if (!c.foto && i === 0) {
-              c.foto = percorso;
-              dopo.push(db.from("camere_annuncio").update({ foto: percorso }).eq("id", c.id));
-            }
-            return Promise.all(dopo).then(function (rr) {
-              var conErrore = rr.find(function (x) { return x.error; });
-              return conErrore || { error: null };
-            });
+            return db.from("foto_annunci")
+              .insert({ annuncio_id: annuncioId, percorso: percorso, posizione: 50 + c.posizione * 10 + i, camera_id: c.id })
+              .select("id, percorso, posizione, camera_id").single()
+              .then(function (r2) {
+                if (r2.error) return r2;
+                aggiungiMiniCamera(c.riga, r2.data);
+                if (!c.foto) {
+                  c.foto = percorso;
+                  c.riga.dataset.foto = percorso;
+                  return db.from("camere_annuncio").update({ foto: percorso }).eq("id", c.id);
+                }
+                return { error: null };
+              });
           });
       });
     });
     return catena.then(function (esito) {
-      c.riga.querySelector(".camFoto").value = "";
+      // Via le anteprime in coda: ora ci sono le miniature vere.
+      c.riga.querySelectorAll(".mini.in-coda").forEach(function (m) { m.remove(); });
+      c.riga._coda = [];
       return esito;
     });
   }
 
+  // Miniature delle foto GENERALI dell'annuncio (quelle delle camere vivono
+  // nelle rispettive righe). La prima e' la copertina mostrata in ricerca;
+  // le altre hanno il bottone "Usa come copertina".
   function mostraMiniature(foto) {
     var cont = el("miniatureFoto");
     cont.innerHTML = "";
-    foto.sort(function (a, b) { return a.posizione - b.posizione; }).forEach(function (f) {
+    var generali = (foto || [])
+      .filter(function (f) { return !f.camera_id; })
+      .sort(function (a, b) { return a.posizione - b.posizione; });
+    generali.forEach(function (f, i) {
       var div = document.createElement("div");
       div.className = "mini";
       div.style.backgroundImage = "url('" + AM.urlFoto(db, f.percorso) + "')";
+      if (i === 0) {
+        var badge = document.createElement("span");
+        badge.className = "badge-copertina";
+        badge.textContent = "Copertina";
+        div.appendChild(badge);
+      } else {
+        var scegli = document.createElement("button");
+        scegli.type = "button";
+        scegli.className = "fai-copertina";
+        scegli.textContent = "Usa come copertina";
+        scegli.addEventListener("click", function () {
+          db.from("foto_annunci").update({ posizione: generali[0].posizione - 1 })
+            .eq("id", f.id).then(ricaricaFotoEditor);
+        });
+        div.appendChild(scegli);
+      }
       var x = document.createElement("button");
       x.type = "button"; x.textContent = "✕"; x.title = "Elimina foto";
       x.addEventListener("click", function () {
         db.storage.from("foto-annunci").remove([f.percorso]).then(function () {
           return db.from("foto_annunci").delete().eq("id", f.id);
-        }).then(function () { div.remove(); });
+        }).then(ricaricaFotoEditor);
       });
       div.appendChild(x);
       cont.appendChild(div);
     });
   }
+
+  // Foto generali dell'annuncio: caricamento IMMEDIATO alla scelta dei file.
+  el("aggiungiFotoAnnuncio").addEventListener("click", function () { el("anFoto").click(); });
+  el("anFoto").addEventListener("change", function () {
+    var files = Array.prototype.slice.call(el("anFoto").files);
+    el("anFoto").value = "";
+    if (!files.length || !annuncioInModifica || !db) return;
+    el("aggiungiFotoAnnuncio").textContent = "Caricamento…";
+    caricaFoto(annuncioInModifica, files).then(function (esito) {
+      el("aggiungiFotoAnnuncio").textContent = "+ Aggiungi foto";
+      if (esito.errori) {
+        el("esitoEditor").innerHTML = '<div class="avviso errore">' + esito.errori + " foto non caricate: riprova.</div>";
+      }
+      ricaricaFotoEditor();
+    });
+  });
 
   function valNum(id, interi) {
     var v = el(id).value;
@@ -670,11 +805,11 @@
     var salvataggio;
     if (annuncioInModifica) {
       salvataggio = db.from("annunci").update(dati).eq("id", annuncioInModifica.id)
-        .select("*, foto_annunci(id, percorso, posizione)").single();
+        .select("*, foto_annunci(id, percorso, posizione, camera_id)").single();
     } else {
       dati.proprietario = utente.id;
       salvataggio = db.from("annunci").insert(dati)
-        .select("*, foto_annunci(id, percorso, posizione)").single();
+        .select("*, foto_annunci(id, percorso, posizione, camera_id)").single();
     }
 
     salvataggio.then(function (r) {
@@ -688,28 +823,21 @@
       el("zonaFoto").style.display = "block";
 
       salvaCamere(r.data.id).then(function (rc) {
+        bottone.disabled = false;
         if (rc && rc.error) {
-          bottone.disabled = false;
           el("esitoEditor").innerHTML = '<div class="avviso errore">Annuncio salvato ma camere non salvate: ' + AM.testoSicuro(rc.error.message) + "</div>";
           return;
         }
-        var file = el("anFoto").files;
-        if (!file.length) {
-          bottone.disabled = false;
-          el("esitoEditor").innerHTML = '<div class="avviso ok">Annuncio salvato' +
-            (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
-          mostraMiniature(r.data.foto_annunci || []);
-          return;
-        }
-        caricaFoto(r.data, file).then(function (esito) {
-          bottone.disabled = false;
-          el("anFoto").value = "";
-          el("esitoEditor").innerHTML = esito.errori
-            ? '<div class="avviso errore">Annuncio salvato ma ' + esito.errori + " foto non caricate: riprova.</div>"
-            : '<div class="avviso ok">Annuncio e foto salvati' +
-              (r.data.stato === "bozza" ? ". E' in bozza: pubblicalo dall'elenco quando e' pronto." : ".") + "</div>";
-          ricaricaFotoEditor();
-        });
+        // Conferma ben visibile: banner + bottone che diventa "Salvato".
+        el("esitoEditor").innerHTML = '<div class="avviso ok"><b>✓ Annuncio salvato.</b> ' +
+          (r.data.stato === "bozza"
+            ? "E' in bozza: quando e' pronto, pubblicalo con il bottone Pubblica nell'elenco dei tuoi annunci."
+            : "Le modifiche sono gia' online.") +
+          " Puoi chiudere il pannello o continuare a modificare.</div>";
+        el("esitoEditor").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        bottone.textContent = "✓ Salvato";
+        setTimeout(function () { bottone.textContent = "Salva"; }, 3000);
+        mostraMiniature(r.data.foto_annunci || []);
       });
     });
   });
@@ -735,9 +863,13 @@
 
   function ricaricaFotoEditor() {
     if (!annuncioInModifica) return;
-    db.from("foto_annunci").select("id, percorso, posizione")
+    db.from("foto_annunci").select("id, percorso, posizione, camera_id")
       .eq("annuncio_id", annuncioInModifica.id)
-      .then(function (r) { if (!r.error) mostraMiniature(r.data); });
+      .then(function (r) {
+        if (r.error) return;
+        annuncioInModifica.foto_annunci = r.data;
+        mostraMiniature(r.data);
+      });
   }
 
   // ─── Richieste ricevute (da proprietario) ─────────────────────────────────
