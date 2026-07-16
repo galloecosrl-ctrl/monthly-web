@@ -49,7 +49,7 @@ Netlify, repo GitHub separato.
 
 - Gli annunci **pubblicati** sono visibili a tutti, anche senza account; bozze e
   sospesi solo al proprietario e all'admin.
-- L'**indirizzo completo** non e' mai mostrato al pubblico (solo citta' e zona).
+- L'**indirizzo completo** compare sulla mappa dell'annuncio (scelta del 16/07/2026: punto esatto stile booking).
 - Le **richieste** le vedono solo inquilino e proprietario dell'annuncio.
 - I **contatti** (nome, email, telefono) si aprono solo in trattativa: il
   proprietario vede quelli di chi gli scrive; l'inquilino vede quelli del

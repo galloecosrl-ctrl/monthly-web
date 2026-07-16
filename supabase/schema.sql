@@ -35,8 +35,7 @@ create table public.annunci (
   tipologia       text not null check (tipologia in ('camera','monolocale','appartamento','casa')),
   citta           text not null,
   zona            text,
-  -- Indirizzo completo: visibile SOLO al proprietario (e all'admin); al
-  -- pubblico si mostrano solo citta' e zona. Si comunica dopo l'accettazione.
+  -- Indirizzo completo: usato per il punto esatto sulla mappa dell'annuncio.
   indirizzo       text,
   descrizione     text,
   mq              integer,

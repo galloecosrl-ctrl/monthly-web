@@ -120,8 +120,8 @@
       </div>
       <div id="zonaMappa" style="display:none">
         <h2 style="font-size:1.1rem;margin:18px 0 4px">Dove si trova</h2>
-        <p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:8px">Posizione indicativa della zona: l'indirizzo esatto si riceve con la prenotazione.</p>
-        <iframe id="mappa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mappa della zona"></iframe>
+        <p style="font-size:0.85rem;color:var(--testo-tenue);margin-bottom:8px" id="mappaIndirizzo"></p>
+        <iframe id="mappa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mappa della posizione"></iframe>
       </div>
       <div class="servizi" id="servizi" style="margin-top:16px"></div>
       <h2 style="font-size:1.1rem;margin:8px 0 6px">Descrizione</h2>
@@ -287,9 +287,13 @@
     }
     aggiornaPrezzo();
 
-    // Mappa della zona (citta' + quartiere: l'indirizzo esatto resta privato).
-    var luogoMappa = a.citta + (a.zona ? ", " + a.zona : "") + ", Italia";
-    el("mappa").src = "https://www.google.com/maps?q=" + encodeURIComponent(luogoMappa) + "&z=14&output=embed";
+    // Mappa col punto esatto quando c'e' l'indirizzo, altrimenti la zona.
+    var luogoMappa = a.indirizzo
+      ? a.indirizzo + ", " + a.citta
+      : a.citta + (a.zona ? ", " + a.zona : "");
+    el("mappaIndirizzo").textContent = luogoMappa;
+    el("mappa").src = "https://www.google.com/maps?q=" + encodeURIComponent(luogoMappa + ", Italia") +
+      "&z=" + (a.indirizzo ? 16 : 14) + "&output=embed";
     el("zonaMappa").style.display = "block";
 
     // Galleria: tutte le foto dell'annuncio, senza doppioni (la stessa foto

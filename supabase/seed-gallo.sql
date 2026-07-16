@@ -19,12 +19,12 @@ with andrea as (
   select id from auth.users where email = 'galloecosrl@gmail.com'
 ), annuncio as (
   insert into public.annunci
-    (proprietario, titolo, tipologia, citta, zona, descrizione,
+    (proprietario, titolo, tipologia, citta, zona, indirizzo, descrizione,
      camere, bagni, posti_letto, arredato, servizi,
      prezzo_mese, spese_incluse, minimo_mesi, stato)
   select id,
     'Villino Elda - Camere in villino con giardino al Pigneto',
-    'camera', 'Roma', 'Pigneto',
+    'camera', 'Roma', 'Pigneto', 'Via Auconi 22',
     'Villino indipendente nel cuore del Pigneto, a 200 metri dalla fermata Malatesta della Metro C: 4 camere arredate, 3 bagni, salone e cucina in comune e 600 mq di giardino, perfetto per studiare o rilassarsi all''aperto.' || E'\n\n' ||
     'Ogni camera ha il suo carattere e si prenota separatamente, col suo prezzo: due hanno il bagno privato, due condividono il bagno. La casa e'' pensata per studenti e giovani lavoratori.' || E'\n\n' ||
     'Gestione familiare con anni di esperienza nell''ospitalita'' (ex B&B pluripremiato su Booking.com): contratto regolare a uso transitorio, zero sorprese. Cauzione pari a una mensilita''.',
