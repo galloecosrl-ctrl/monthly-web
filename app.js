@@ -70,6 +70,7 @@
   // gli altri vivono nel bucket Storage di Supabase.
   function urlFoto(client, percorso) {
     if (/^(\/|https?:)/.test(percorso)) return percorso;
+    if (!client) return percorso; // senza client non possiamo risolvere lo Storage
     return client.storage.from("foto-annunci").getPublicUrl(percorso).data.publicUrl;
   }
 
@@ -98,7 +99,7 @@
     var img = copertina(client, a);
     var luogo = a.citta + (a.zona ? " · " + a.zona : "");
     var p = prezzoDa(a);
-    return '<a class="carta-annuncio" href="annuncio.html?id=' + a.id + '">' +
+    return '<a class="carta-annuncio" data-id="' + a.id + '" href="annuncio.html?id=' + a.id + '">' +
       '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") + "</div>" +
       '<div class="corpo">' +
       '<span class="etichetta">' + (TIPOLOGIE[a.tipologia] || a.tipologia) + "</span>" +

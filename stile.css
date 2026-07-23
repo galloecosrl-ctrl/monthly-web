@@ -1,13 +1,15 @@
 /* Monthly - stile condiviso di tutte le pagine.
-   Identita' dal logo: navy profondo ("Month") + azzurro ("ly") per le
-   call-to-action. L'ambra resta solo come colore semantico di attesa. */
+   Identita' VERDE (scelta 17/07/2026): verde bosco profondo per struttura e
+   "Month", smeraldo vivo per le call-to-action e "ly". Elegante, distintivo
+   (Booking=blu, Airbnb=rosso, HousingAnywhere=arancione) e in risonanza
+   con la sensibilita' green. L'ambra resta solo semantica (attesa). */
 
 :root {
-  --blu: #1b2f5e;
-  --blu-scuro: #13234a;
-  --azzurro: #3d9bf5;
-  --azzurro-scuro: #1f7fdd;
-  --azzurro-chiaro: #eaf3fe;
+  --verde: #0c5c45;
+  --verde-scuro: #084332;
+  --verde-vivo: #18b077;
+  --verde-vivo-scuro: #0f8f5f;
+  --verde-chiaro: #e9f8f1;
   --testo: #1f2937;
   --testo-tenue: #6b7280;
   --bordo: #e5e7eb;
@@ -26,7 +28,7 @@ body {
   line-height: 1.55;
 }
 
-a { color: var(--blu); text-decoration: none; }
+a { color: var(--verde); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* ─── Header ─────────────────────────────────────────────────────────────── */
@@ -40,10 +42,10 @@ a:hover { text-decoration: underline; }
 }
 .testata .logo {
   font-family: "Baloo 2", "Nunito", -apple-system, "Segoe UI", sans-serif;
-  font-size: 2rem; font-weight: 700; color: var(--blu);
+  font-size: 2rem; font-weight: 700; color: var(--verde);
   letter-spacing: -0.01em;
 }
-.testata .logo span { color: var(--azzurro); }
+.testata .logo span { color: var(--verde-vivo); }
 .testata nav { display: flex; align-items: center; gap: 14px; }
 
 /* ─── Bottoni ────────────────────────────────────────────────────────────── */
@@ -51,16 +53,16 @@ a:hover { text-decoration: underline; }
   display: inline-block; border: none; cursor: pointer;
   border-radius: 8px; padding: 10px 18px;
   font-size: 0.95rem; font-weight: 600;
-  background: var(--blu); color: #fff;
+  background: var(--verde); color: #fff;
   transition: background 0.15s;
 }
-.bottone:hover { background: var(--blu-scuro); text-decoration: none; }
-.bottone.azzurro { background: var(--azzurro); }
-.bottone.azzurro:hover { background: var(--azzurro-scuro); }
+.bottone:hover { background: var(--verde-scuro); text-decoration: none; }
+.bottone.vivo { background: var(--verde-vivo); }
+.bottone.vivo:hover { background: var(--verde-vivo-scuro); }
 .bottone.secondario {
-  background: #fff; color: var(--blu); border: 1.5px solid var(--blu);
+  background: #fff; color: var(--verde); border: 1.5px solid var(--verde);
 }
-.bottone.secondario:hover { background: var(--azzurro-chiaro); }
+.bottone.secondario:hover { background: var(--verde-chiaro); }
 .bottone.piccolo { padding: 6px 12px; font-size: 0.85rem; }
 .bottone.pericolo { background: #fff; color: var(--rosso); border: 1.5px solid var(--rosso); }
 .bottone.pericolo:hover { background: #fef2f2; }
@@ -83,8 +85,8 @@ input, select, textarea {
   font-size: 0.95rem; font-family: inherit; background: #fff; color: var(--testo);
 }
 input:focus, select:focus, textarea:focus {
-  outline: none; border-color: var(--blu);
-  box-shadow: 0 0 0 3px rgba(61,155,245,0.18);
+  outline: none; border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(24,176,119,0.16);
 }
 textarea { resize: vertical; min-height: 90px; }
 .campi-riga { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -116,13 +118,13 @@ textarea { resize: vertical; min-height: 90px; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .carta-annuncio .luogo { color: var(--testo-tenue); font-size: 0.87rem; }
-.carta-annuncio .prezzo { margin-top: 8px; font-size: 1.12rem; font-weight: 800; color: var(--blu-scuro); }
+.carta-annuncio .prezzo { margin-top: 8px; font-size: 1.12rem; font-weight: 800; color: var(--verde-scuro); }
 .carta-annuncio .prezzo small { font-weight: 400; color: var(--testo-tenue); }
 
 .etichetta {
   display: inline-block; padding: 2px 9px; border-radius: 999px;
   font-size: 0.75rem; font-weight: 600;
-  background: var(--azzurro-chiaro); color: var(--blu-scuro);
+  background: var(--verde-chiaro); color: var(--verde-scuro);
 }
 .etichetta.grigia { background: var(--sfondo-tenue); color: var(--testo-tenue); }
 .etichetta.ambra  { background: #fef3c7; color: #b45309; }
@@ -137,14 +139,14 @@ textarea { resize: vertical; min-height: 90px; }
   display: none; max-height: 260px; overflow-y: auto; margin-top: 4px;
 }
 .suggerimenti-citta .voce { padding: 8px 12px; cursor: pointer; font-size: 0.92rem; }
-.suggerimenti-citta .voce:hover { background: var(--azzurro-chiaro); }
+.suggerimenti-citta .voce:hover { background: var(--verde-chiaro); }
 .suggerimenti-citta .voce span { color: var(--testo-tenue); font-size: 0.82rem; }
 
 /* ─── Messaggi ───────────────────────────────────────────────────────────── */
 .avviso { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 0.92rem; }
 .avviso.errore  { background: #fef2f2; color: var(--rosso); border: 1px solid #fecaca; }
 .avviso.ok      { background: #f0fdf4; color: var(--ok); border: 1px solid #bbf7d0; }
-.avviso.info    { background: var(--azzurro-chiaro); color: var(--blu-scuro); border: 1px solid #bfdbfe; }
+.avviso.info    { background: var(--verde-chiaro); color: var(--verde-scuro); border: 1px solid #b9e7d4; }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
 .pie {

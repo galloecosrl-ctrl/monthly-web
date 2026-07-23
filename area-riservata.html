@@ -14,7 +14,7 @@
       padding: 10px; font-size: 0.95rem; font-weight: 600; color: var(--testo-tenue);
       border-bottom: 2.5px solid transparent;
     }
-    .linguette button.attiva { color: var(--blu-scuro); border-bottom-color: var(--blu); }
+    .linguette button.attiva { color: var(--verde-scuro); border-bottom-color: var(--verde); }
     .separatore { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--testo-tenue); font-size: 0.85rem; }
     .separatore::before, .separatore::after { content: ""; flex: 1; border-top: 1px solid var(--bordo); }
     .cruscotto { margin-top: 28px; display: grid; gap: 24px; }
@@ -35,7 +35,7 @@
       border-radius: 999px; border: none; background: var(--rosso); color: #fff;
       font-size: 11px; line-height: 1; cursor: pointer;
     }
-    .contatti { background: var(--azzurro-chiaro); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
+    .contatti { background: var(--verde-chiaro); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-top: 8px; }
     dialog {
       border: none; border-radius: 14px; padding: 26px;
       max-width: 760px; width: calc(100vw - 40px);
@@ -44,7 +44,7 @@
     }
     dialog::backdrop { background: rgba(0,0,0,0.45); }
     .sezione-editor {
-      font-size: 0.95rem; color: var(--blu-scuro);
+      font-size: 0.95rem; color: var(--verde-scuro);
       border-bottom: 1px solid var(--bordo);
       padding-bottom: 4px; margin: 20px 0 4px;
     }
@@ -55,13 +55,13 @@
     .miniature .mini { width: 104px; height: 74px; }
     .miniature .mini .badge-copertina {
       position: absolute; left: 0; right: 0; bottom: 0;
-      background: rgba(27,47,94,0.85); color: #fff;
+      background: rgba(8,67,50,0.85); color: #fff;
       font-size: 10px; text-align: center; padding: 2px 0;
       border-radius: 0 0 6px 6px;
     }
     .miniature .mini .fai-copertina {
       position: absolute; left: 0; right: 0; bottom: 0; display: none;
-      background: rgba(255,255,255,0.95); color: var(--blu);
+      background: rgba(255,255,255,0.95); color: var(--verde);
       border: none; cursor: pointer; font-size: 10px; font-weight: 700; padding: 3px 0;
       border-radius: 0 0 6px 6px;
     }
@@ -71,10 +71,10 @@
     #aggiungiCamera {
       display: block; width: 100%; margin: 6px 0 4px;
       padding: 18px; font-size: 1rem; text-align: center;
-      border: 2px dashed var(--azzurro); background: var(--azzurro-chiaro);
-      color: var(--blu-scuro); border-radius: 12px;
+      border: 2px dashed var(--verde-vivo); background: var(--verde-chiaro);
+      color: var(--verde-scuro); border-radius: 12px;
     }
-    #aggiungiCamera:hover { background: #dbeafe; }
+    #aggiungiCamera:hover { background: #d3f2e4; }
     .griglia-servizi {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
       gap: 4px 10px; margin-top: 6px;
@@ -83,7 +83,7 @@
       display: flex; align-items: center; gap: 7px;
       font-weight: 400; font-size: 0.9rem; margin: 2px 0; cursor: pointer;
     }
-    .griglia-servizi input { width: auto; accent-color: var(--azzurro); }
+    .griglia-servizi input { width: auto; accent-color: var(--verde-vivo); }
   </style>
 </head>
 <body>
@@ -146,7 +146,7 @@
     <div class="scheda">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <h2 style="margin-bottom:0">I tuoi annunci</h2>
-        <button class="bottone azzurro piccolo" id="nuovoAnnuncio" type="button">+ Nuovo annuncio</button>
+        <button class="bottone vivo piccolo" id="nuovoAnnuncio" type="button">+ Nuovo annuncio</button>
       </div>
       <div id="listaAnnunciMiei" style="margin-top:12px"><span style="color:var(--testo-tenue)">Caricamento…</span></div>
     </div>
@@ -286,7 +286,7 @@
     c.innerHTML =
       '<h2 style="font-size:1.2rem;margin-bottom:8px">Area riservata in arrivo</h2>' +
       '<p style="color:var(--testo-tenue);font-size:0.95rem">Il sito e\' in anteprima: registrazione, accesso e pubblicazione degli annunci si attivano con la messa online. Ecco intanto come sara\' il modulo di pubblicazione:</p>' +
-      '<button class="bottone azzurro" style="margin-top:14px" id="apriDemoEditor" type="button">Guarda il modulo di pubblicazione</button>' +
+      '<button class="bottone vivo" style="margin-top:14px" id="apriDemoEditor" type="button">Guarda il modulo di pubblicazione</button>' +
       '<p style="color:var(--testo-tenue);font-size:0.85rem;margin-top:12px">Per informazioni: <a href="mailto:galloecosrl@gmail.com">galloecosrl@gmail.com</a></p>';
     document.getElementById("apriDemoEditor").addEventListener("click", function () {
       apriEditor(null);
@@ -473,7 +473,7 @@
             '<button class="bottone secondario piccolo" data-modifica="' + a.id + '" type="button">Modifica</button>' +
             (a.stato === "pubblicato"
               ? '<button class="bottone piccolo" data-stato="sospeso" data-id="' + a.id + '" type="button">Sospendi</button>'
-              : '<button class="bottone azzurro piccolo" data-stato="pubblicato" data-id="' + a.id + '" type="button">Pubblica</button>') +
+              : '<button class="bottone vivo piccolo" data-stato="pubblicato" data-id="' + a.id + '" type="button">Pubblica</button>') +
             '<button class="bottone pericolo piccolo" data-elimina="' + a.id + '" type="button">Elimina</button>' +
             "</div></div>";
         }).join("");

@@ -21,7 +21,7 @@
       background: var(--sfondo-tenue) center/cover no-repeat;
       border: 2px solid transparent;
     }
-    .galleria .mini.attiva { border-color: var(--blu); }
+    .galleria .mini.attiva { border-color: var(--verde); }
     .dettaglio h1 { font-size: 1.6rem; margin: 18px 0 4px; letter-spacing: -0.01em; }
     .luogo { color: var(--testo-tenue); margin-bottom: 14px; }
     .caratteristiche {
@@ -34,7 +34,7 @@
     .caratteristiche b { display: block; font-size: 0.98rem; }
     .servizi { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
     .descrizione { white-space: pre-line; color: var(--testo); }
-    .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--blu-scuro); }
+    .prezzo-grande { font-size: 1.7rem; font-weight: 800; color: var(--verde-scuro); }
     .prezzo-grande small { font-size: 0.95rem; font-weight: 400; color: var(--testo-tenue); }
     .voce-costo { display: flex; justify-content: space-between; font-size: 0.92rem; margin-top: 6px; color: var(--testo-tenue); }
     .riga-camera {
@@ -46,29 +46,29 @@
     }
     .riga-camera:hover {
       transform: scale(1.015);
-      border-color: var(--azzurro);
-      background: var(--azzurro-chiaro);
-      box-shadow: 0 6px 18px rgba(27,47,94,0.12);
+      border-color: var(--verde-vivo);
+      background: var(--verde-chiaro);
+      box-shadow: 0 6px 18px rgba(12,92,69,0.12);
     }
     .riga-camera.scelta {
-      border-color: var(--azzurro); border-width: 2px;
-      background: var(--azzurro-chiaro);
+      border-color: var(--verde-vivo); border-width: 2px;
+      background: var(--verde-chiaro);
     }
     .riga-camera.scelta .spunta { display: inline-block; }
     .riga-camera .spunta {
       display: none; margin-left: 6px;
-      color: var(--azzurro-scuro); font-weight: 700; font-size: 0.85rem;
+      color: var(--verde-vivo-scuro); font-weight: 700; font-size: 0.85rem;
     }
     .riga-camera .thumb {
       width: 104px; height: 72px; border-radius: 8px; flex: 0 0 auto;
       background: var(--sfondo-tenue) center/cover no-repeat;
     }
-    .riga-camera .prezzo-camera { margin-left: auto; font-weight: 800; color: var(--blu-scuro); white-space: nowrap; }
+    .riga-camera .prezzo-camera { margin-left: auto; font-weight: 800; color: var(--verde-scuro); white-space: nowrap; }
     .riga-camera .prezzo-camera small { font-weight: 400; color: var(--testo-tenue); }
     /* Foto della camera selezionata: si aprono sotto la riga illuminata */
     .foto-camera {
       flex-basis: 100%; display: none; gap: 8px; flex-wrap: wrap;
-      padding-top: 10px; border-top: 1px dashed #bfdbfe; margin-top: 4px;
+      padding-top: 10px; border-top: 1px dashed #b9e7d4; margin-top: 4px;
     }
     .riga-camera.scelta .foto-camera { display: flex; }
     .foto-camera .fotina {
@@ -76,18 +76,18 @@
       background: var(--sfondo-tenue) center/cover no-repeat;
       border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s;
     }
-    .foto-camera .fotina:hover { border-color: var(--azzurro); transform: scale(1.03); }
+    .foto-camera .fotina:hover { border-color: var(--verde-vivo); transform: scale(1.03); }
     #mappa { width: 100%; height: 300px; border: 0; border-radius: 12px; }
     /* Pannello di prenotazione */
     .voce-panello { border-top: 1px solid var(--bordo); padding: 12px 0; font-size: 0.88rem; }
-    .voce-panello h4 { font-size: 0.92rem; margin-bottom: 4px; color: var(--blu-scuro); }
+    .voce-panello h4 { font-size: 0.92rem; margin-bottom: 4px; color: var(--verde-scuro); }
     .voce-panello ul { list-style: none; padding: 0; margin: 0; }
     .voce-panello li { padding: 2px 0; color: var(--testo-tenue); }
     .voce-panello li::before { content: "✓ "; color: var(--ok); font-weight: 700; }
     .voce-panello li.no::before { content: "• "; color: var(--testo-tenue); }
     .voce-panello a { font-weight: 600; }
     .camera-scelta-box {
-      background: var(--azzurro-chiaro); border-radius: 8px;
+      background: var(--verde-chiaro); border-radius: 8px;
       padding: 8px 12px; margin-top: 8px; font-size: 0.9rem;
     }
   </style>
@@ -259,7 +259,8 @@
           '<div class="thumb"' + (c.foto ? ' style="background-image:url(\'' + AM.urlFoto(db, c.foto) + '\')"' : "") + "></div>" +
           '<div><b>' + AM.testoSicuro(c.nome) + '</b><span class="spunta">✓ selezionata</span><br>' +
           '<span class="etichetta ' + (c.bagno === "privato" ? "" : "grigia") + '">bagno ' + c.bagno + "</span></div>" +
-          '<div class="prezzo-camera">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small></div>";
+          '<div class="prezzo-camera" style="text-align:right">' + AM.euro(c.prezzo_mese) + " <small>/ mese</small><br>" +
+          '<button type="button" class="bottone secondario piccolo btn-scegli" style="margin-top:6px">Seleziona</button></div>';
         // Striscia di foto della camera, visibile solo quando e' selezionata.
         var striscia = document.createElement("div");
         striscia.className = "foto-camera";
@@ -278,8 +279,18 @@
         riga.appendChild(striscia);
         riga.addEventListener("click", function () {
           cameraScelta = c;
-          document.querySelectorAll(".riga-camera").forEach(function (r) { r.classList.remove("scelta"); });
+          document.querySelectorAll(".riga-camera").forEach(function (r) {
+            r.classList.remove("scelta");
+            var b = r.querySelector(".btn-scegli");
+            b.textContent = "Seleziona";
+            b.classList.remove("vivo");
+            b.classList.add("secondario");
+          });
           riga.classList.add("scelta");
+          var bottone = riga.querySelector(".btn-scegli");
+          bottone.textContent = "✓ Selezionata";
+          bottone.classList.remove("secondario");
+          bottone.classList.add("vivo");
           aggiornaPrezzo();
         });
         el("listaCamere").appendChild(riga);
@@ -375,7 +386,7 @@
       '<label for="prMesi">Per quanti mesi</label><input id="prMesi" type="number" min="' + a.minimo_mesi + '" value="' + a.minimo_mesi + '" required>' +
       '<label for="prMessaggio">Un messaggio per il proprietario (facoltativo)</label>' +
       '<textarea id="prMessaggio" placeholder="Chi sei, cosa fai, perche\' cerchi casa in questo periodo…"></textarea>' +
-      '<button class="bottone azzurro" type="submit" style="width:100%;margin-top:14px">Prenota subito</button>' +
+      '<button class="bottone vivo" type="submit" style="width:100%;margin-top:14px">Prenota subito</button>' +
       '</form><div id="esitoPrenota"></div>';
     var form = document.getElementById("formPrenota");
     var esito = function (html) { document.getElementById("esitoPrenota").innerHTML = html; };
