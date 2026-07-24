@@ -94,17 +94,42 @@
     return { prezzo: minimo, da: true };
   }
 
-  // Card annuncio per le griglie (home e area riservata).
+  // Card annuncio per le griglie (home e area riservata), con gli elementi
+  // salienti in evidenza: disponibilita', metratura/locali, servizi chiave.
   function cartaAnnuncio(client, a) {
     var img = copertina(client, a);
     var luogo = a.citta + (a.zona ? " · " + a.zona : "");
     var p = prezzoDa(a);
+
+    // Badge di disponibilita' sulla foto.
+    var oggi = new Date().toISOString().slice(0, 10);
+    var badgeDispo = (!a.disponibile_dal || a.disponibile_dal <= oggi)
+      ? "Disponibile subito"
+      : "Dal " + dataIt(a.disponibile_dal);
+
+    // Riga dei dati essenziali: m2, camere, bagni, periodo minimo.
+    var meta = [];
+    if (a.mq) meta.push(a.mq + " m²");
+    if (a.camere) meta.push(a.camere + (a.camere > 1 ? " camere" : " camera"));
+    if (a.bagni) meta.push(a.bagni + (a.bagni > 1 ? " bagni" : " bagno"));
+    if (a.minimo_mesi > 1) meta.push("min " + a.minimo_mesi + " mesi");
+
+    // I primi servizi come mini-chip, col conteggio dei rimanenti.
+    var servizi = a.servizi || [];
+    var chips = servizi.slice(0, 3).map(function (s) {
+      return "<span>" + testoSicuro(s) + "</span>";
+    });
+    if (servizi.length > 3) chips.push("<span>+" + (servizi.length - 3) + "</span>");
+
     return '<a class="carta-annuncio" data-id="' + a.id + '" href="annuncio.html?id=' + a.id + '">' +
-      '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") + "</div>" +
+      '<div class="foto"' + (img ? ' style="background-image:url(\'' + img + '\')"' : "") + '>' + (img ? "" : "🏠") +
+      '<span class="badge-dispo">' + badgeDispo + "</span></div>" +
       '<div class="corpo">' +
       '<span class="etichetta">' + (TIPOLOGIE[a.tipologia] || a.tipologia) + "</span>" +
       "<h3>" + testoSicuro(a.titolo) + "</h3>" +
       '<div class="luogo">' + testoSicuro(luogo) + "</div>" +
+      (meta.length ? '<div class="meta">' + meta.join(" · ") + "</div>" : "") +
+      (chips.length ? '<div class="mini-servizi">' + chips.join("") + "</div>" : "") +
       '<div class="prezzo">' + (p.da ? '<small>da</small> ' : "") + euro(p.prezzo) + ' <small>/ mese' +
       (a.spese_incluse ? ", spese incluse" : "") + "</small></div>" +
       "</div></a>";

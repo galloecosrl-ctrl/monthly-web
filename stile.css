@@ -111,6 +111,21 @@ textarea { resize: vertical; min-height: 90px; }
   height: 175px; background: var(--sfondo-tenue) center/cover no-repeat;
   display: flex; align-items: center; justify-content: center;
   color: var(--testo-tenue); font-size: 2rem;
+  position: relative;
+}
+.carta-annuncio .badge-dispo {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(255,255,255,0.95); color: var(--verde-scuro);
+  font-size: 0.72rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.carta-annuncio .meta { color: var(--testo-tenue); font-size: 0.82rem; margin-top: 4px; }
+.carta-annuncio .mini-servizi { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.carta-annuncio .mini-servizi span {
+  font-size: 0.7rem; padding: 1px 8px; border-radius: 999px;
+  background: var(--sfondo-tenue); color: var(--testo-tenue);
+  border: 1px solid var(--bordo);
 }
 .carta-annuncio .corpo { padding: 14px 16px 16px; }
 .carta-annuncio h3 {

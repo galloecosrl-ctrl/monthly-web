@@ -235,7 +235,7 @@
     AM.pronto().then(function (db) {
       dbCorrente = db;
       var q = db.from("annunci")
-        .select("id, titolo, tipologia, citta, zona, indirizzo, prezzo_mese, spese_incluse, foto_annunci(percorso, posizione), camere_annuncio(prezzo_mese)")
+        .select("id, titolo, tipologia, citta, zona, indirizzo, prezzo_mese, spese_incluse, mq, camere, bagni, minimo_mesi, disponibile_dal, servizi, foto_annunci(percorso, posizione), camere_annuncio(prezzo_mese)")
         .eq("stato", "pubblicato")
         .order("creato_il", { ascending: false })
         .limit(24);
