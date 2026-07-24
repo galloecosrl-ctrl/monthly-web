@@ -43,21 +43,34 @@
     .fascia-proprietari h2 { font-size: 1.4rem; margin-bottom: 8px; }
     .fascia-proprietari p { color: var(--testo-tenue); max-width: 560px; margin: 0 auto 18px; }
     @media (max-width: 640px) { .eroe h1 { font-size: 1.6rem; } }
-    /* Vista divisa risultati + mappa, stile HousingAnywhere */
-    .vista-risultati.divisa {
-      display: grid; grid-template-columns: minmax(0, 1fr) 46%;
+    /* Vista risultati + mappa fissa a destra, stile HousingAnywhere:
+       annunci su due colonne a sinistra (scorrono), mappa sticky a destra. */
+    .vista-risultati {
+      display: grid; grid-template-columns: minmax(0, 1fr) 44%;
       gap: 20px; align-items: start;
     }
-    .vista-risultati.divisa .griglia-annunci {
-      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 16px;
+    .vista-risultati .griglia-annunci {
+      grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
     }
     #pannelloMappa { position: sticky; top: 84px; }
     #mappaRicerca {
       height: calc(100vh - 130px); min-height: 420px;
       border-radius: 14px; border: 1px solid var(--bordo); overflow: hidden;
     }
+    #bottoneSchermoIntero {
+      position: absolute; top: 12px; right: 12px; z-index: 1001;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+    /* Mappa espansa a tutto schermo */
+    #pannelloMappa.schermo-intero {
+      position: fixed; inset: 0; z-index: 300;
+      background: #fff; padding: 14px;
+    }
+    #pannelloMappa.schermo-intero #mappaRicerca { height: 100%; min-height: 0; }
+    #pannelloMappa.schermo-intero #bottoneSchermoIntero { top: 26px; right: 26px; }
     @media (max-width: 900px) {
-      .vista-risultati.divisa { display: block; }
+      .vista-risultati { display: block; }
+      .vista-risultati .griglia-annunci { grid-template-columns: 1fr; }
       #pannelloMappa { position: static; margin-top: 18px; }
       #mappaRicerca { height: 380px; }
     }
@@ -127,7 +140,6 @@
     </select>
   </div>
   <button class="bottone vivo" type="submit">Cerca</button>
-  <button class="bottone secondario" type="button" id="bottoneMappa" title="Vedi i risultati sulla mappa">🗺️ Mappa</button>
 </form>
 
 <main class="contenitore">
@@ -136,7 +148,8 @@
     <div id="esitoRicerca"></div>
     <div class="vista-risultati" id="vistaRisultati">
       <div><div class="griglia-annunci" id="grigliaAnnunci"></div></div>
-      <div id="pannelloMappa" style="display:none">
+      <div id="pannelloMappa">
+        <button class="bottone piccolo" type="button" id="bottoneSchermoIntero" title="Mappa a tutto schermo">⛶ Espandi</button>
         <div id="mappaRicerca"></div>
       </div>
     </div>
@@ -254,16 +267,18 @@
   var gruppoMarcatori = null;
   var cacheGeo = {};
 
-  document.getElementById("bottoneMappa").addEventListener("click", function () {
+  // La mappa e' sempre visibile accanto ai risultati; questo bottone la
+  // espande a tutto schermo (e la richiude).
+  document.getElementById("bottoneSchermoIntero").addEventListener("click", function () {
     var pannello = document.getElementById("pannelloMappa");
-    var apri = pannello.style.display === "none";
-    pannello.style.display = apri ? "block" : "none";
-    document.getElementById("vistaRisultati").classList.toggle("divisa", apri);
-    this.classList.toggle("vivo", apri);
-    this.classList.toggle("secondario", !apri);
-    if (apri) {
-      preparaMappa();
-      document.getElementById("areaRisultati").scrollIntoView({ behavior: "smooth" });
+    var espansa = pannello.classList.toggle("schermo-intero");
+    this.textContent = espansa ? "✕ Chiudi" : "⛶ Espandi";
+    document.body.style.overflow = espansa ? "hidden" : "";
+    if (mappa) setTimeout(function () { mappa.invalidateSize(); }, 150);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && document.getElementById("pannelloMappa").classList.contains("schermo-intero")) {
+      document.getElementById("bottoneSchermoIntero").click();
     }
   });
 
@@ -336,7 +351,7 @@
   });
 
   function aggiornaMappa() {
-    if (!mappa || document.getElementById("pannelloMappa").style.display === "none") return;
+    if (!mappa) return;
     setTimeout(function () { mappa.invalidateSize(); }, 150);
     gruppoMarcatori.clearLayers();
     marcatoriPerId = {};
@@ -386,6 +401,7 @@
   });
 
   cerca({});
+  preparaMappa();
 })();
 </script>
 </body>

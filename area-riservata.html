@@ -434,7 +434,7 @@
           }).join("");
           cont.querySelectorAll("[data-annulla]").forEach(function (b) {
             b.addEventListener("click", function () {
-              if (!confirm("Condizioni di cancellazione: gratuita fino a 30 giorni prima dell'ingresso; dopo, penale pari a una mensilita' da corrispondere al proprietario.\n\nConfermi l'annullamento?")) return;
+              if (!confirm("Condizioni di cancellazione: gratuita fino a 30 giorni prima dell'ingresso; dopo, dovrai versare al proprietario una penale di una mensilita'.\n\nConfermi l'annullamento?")) return;
               db.from("richieste").update({ stato: "annullata" }).eq("id", b.dataset.annulla)
                 .then(caricaRichiesteMie);
             });
